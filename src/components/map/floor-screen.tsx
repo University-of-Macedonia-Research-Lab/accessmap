@@ -277,15 +277,20 @@ function Dock({
       className={
         // Mobile: pinned to the bottom, full-width-ish.
         // md+: floats top-left of the map area, fixed width.
-        "pointer-events-none absolute z-20 " +
+        // z-[1000] keeps the dock above Leaflet's controls (z-index 800)
+        // and any pane content during zoom.
+        "pointer-events-none absolute z-[1000] " +
         "inset-x-3 bottom-3 " +
         "md:inset-auto md:bottom-auto md:left-4 md:top-4 md:w-[400px]"
       }
     >
       <div
         className={
+          // Surface-matched bg + heavy backdrop blur so the dock reads as
+          // an elevated slice of the same canvas the map sits on, not a
+          // foreign panel floating in front of it.
           "pointer-events-auto flex flex-col overflow-hidden rounded-2xl border border-[var(--border)] " +
-          "bg-[var(--background)]/92 shadow-[var(--shadow-card)] backdrop-blur-md"
+          "bg-[var(--surface-2)]/95 shadow-[var(--shadow-card)] backdrop-blur-md"
         }
       >
         {summary && (

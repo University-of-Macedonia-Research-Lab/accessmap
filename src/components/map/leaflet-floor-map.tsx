@@ -14,7 +14,7 @@
  * because Leaflet touches `window` at import time.
  */
 import { useMemo } from "react";
-import { MapContainer, SVGOverlay } from "react-leaflet";
+import { MapContainer, SVGOverlay, ZoomControl } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { FloorMapInner } from "./floor-map-view";
@@ -70,8 +70,12 @@ export function LeafletFloorMap({
       zoomSnap={0.25}
       zoomDelta={0.5}
       attributionControl={false}
+      zoomControl={false}
       className="h-full w-full bg-[var(--surface-2)]"
     >
+      {/* Zoom buttons live in the top-right so they never collide with the
+          floating command dock that anchors top-left on md+ screens. */}
+      <ZoomControl position="topright" />
       <SVGOverlay
         bounds={bounds}
         attributes={{
