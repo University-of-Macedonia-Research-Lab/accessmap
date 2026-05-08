@@ -1,14 +1,30 @@
 "use client";
 
 /**
- * The full floor experience: app shell with a sidebar of controls (floor
- * switcher + route picker + assistant) and a Leaflet map filling the main
- * area. Owns the shared state so the manual route picker and the
- * assistant can both feed the same `highlightedRoute` prop on the map.
+ * Floor demo screen.
+ *
+ * Layout: the map fills the entire main area. A single floating "command
+ * dock" overlays the map with six numbered chips (01 Plan, 02 Profile, 03
+ * Floor, 04 View, 05 Assistant, 06 Info) — the same numbered structure the
+ * home page uses, applied to the demo's actual controls. Tap a chip and a
+ * panel expands beneath the dock with that section's content.
+ *
+ * The dock is the same component on mobile and desktop; only its anchor
+ * changes — bottom-pinned on small screens, floating top-left on md+.
  */
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Compass,
+  Eye,
+  Info,
+  Layers,
+  MessageCircle,
+  Route,
+  X,
+} from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { FloorMap } from "./floor-map";
 import { AssistantPanel } from "./assistant-panel";
@@ -30,37 +46,38 @@ type Props = {
 
 type RoomRef = { floor: string; room: string };
 
+type SectionId = "plan" | "profile" | "floor" | "view" | "assistant" | "info";
+
+type SectionMeta = {
+  id: SectionId;
+  n: string;
+  icon: React.ReactNode;
+  topicEn: string;
+  topicEl: string;
+};
+
+const SECTIONS: SectionMeta[] = [
+  { id: "plan", n: "01", icon: <Route className="h-4 w-4" />, topicEn: "Plan", topicEl: "Σχεδιασμός" },
+  { id: "profile", n: "02", icon: <Compass className="h-4 w-4" />, topicEn: "Profile", topicEl: "Προφίλ" },
+  { id: "floor", n: "03", icon: <Layers className="h-4 w-4" />, topicEn: "Floor", topicEl: "Όροφος" },
+  { id: "view", n: "04", icon: <Eye className="h-4 w-4" />, topicEn: "View", topicEl: "Εμφάνιση" },
+  { id: "assistant", n: "05", icon: <MessageCircle className="h-4 w-4" />, topicEn: "Assistant", topicEl: "Βοηθός" },
+  { id: "info", n: "06", icon: <Info className="h-4 w-4" />, topicEn: "Info", topicEl: "Στοιχεία" },
+];
+
 function profileLabel(p: Profile, lang: Lang): string {
   return lang === "el" ? p.labelEl : p.label;
 }
 
+function prettyBuildingName(slug: string): string {
+  return slug
+    .split(/[-_]/)
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
 export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
   const { lang } = useLang();
-  const isEl = lang === "el";
-  const t = isEl
-    ? {
-        plan: "Σχεδιασμός διαδρομής",
-        from: "Από",
-        to: "Προς",
-        profile: "Προφίλ",
-        display: "Εμφάνιση",
-        showGraph: "Εμφάνιση γραφήματος δρομολόγησης",
-        floor: "Όροφος",
-        howWorks: "Πώς λειτουργεί;",
-        controls: "Έλεγχοι χάρτη",
-      }
-    : {
-        plan: "Plan a route",
-        from: "From",
-        to: "To",
-        profile: "Profile",
-        display: "Display",
-        showGraph: "Show routing graph",
-        floor: "Floor",
-        howWorks: "How does this work?",
-        controls: "Map controls",
-      };
-
   const currentFloor =
     floors.find((f) => f.floorSlug === currentFloorSlug) ?? floors[0];
 
@@ -73,9 +90,7 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
             value: `${f.floorSlug}|${r.id}`,
             floor: f.floorSlug,
             room: r.id,
-            label: r.code
-              ? `${r.code} · ${r.name[lang]}`
-              : r.name[lang],
+            label: r.code ? `${r.code} · ${r.name[lang]}` : r.name[lang],
             floorName: f.name[lang],
           })),
       ),
@@ -108,9 +123,8 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
   const [toRef, setToRefState] = useState<RoomRef>(defaultTo);
   const [profileId, setProfileIdState] = useState<string>("default");
   const [showGraph, setShowGraph] = useState(false);
-  // Assistant-suggested multi-floor route. Overrides the manual route until
-  // the user touches the From/To/Profile form again.
   const [aiPath, setAiPath] = useState<MultiFloorPath | null>(null);
+  const [activeSection, setActiveSection] = useState<SectionId | null>("plan");
 
   const setFromRef = (v: RoomRef) => {
     setFromRefState(v);
@@ -143,100 +157,6 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
     return segs.flatMap((s) => s.nodes);
   }, [activePath, currentFloorSlug]);
 
-  const sidebar = (
-    <div className="flex flex-col gap-5">
-      <FloorSwitcher
-        buildingSlug={buildingSlug}
-        floors={floors}
-        currentFloorSlug={currentFloorSlug}
-        floorLabel={t.floor}
-        lang={lang}
-      />
-
-      <Divider />
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-overline">{t.plan}</h2>
-        <Field label={t.from}>
-          <RoomSelect
-            value={fromRef}
-            options={allRoomOptions}
-            onChange={setFromRef}
-          />
-        </Field>
-        <Field label={t.to}>
-          <RoomSelect
-            value={toRef}
-            options={allRoomOptions}
-            onChange={setToRef}
-          />
-        </Field>
-        <Field label={t.profile}>
-          <div className="flex flex-wrap gap-1.5">
-            {PROFILE_LIST.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setProfileId(p.id)}
-                className={
-                  "rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors " +
-                  (p.id === profileId
-                    ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                    : "border-[var(--border)] bg-[var(--background)] text-[color:var(--foreground)] hover:bg-[var(--surface-2)]")
-                }
-              >
-                {profileLabel(p, lang)}
-              </button>
-            ))}
-          </div>
-        </Field>
-
-        <RouteSummary
-          activePath={activePath}
-          aiAuthored={Boolean(aiPath)}
-          fromRef={fromRef}
-          toRef={toRef}
-          profile={profile}
-          buildingSlug={buildingSlug}
-          currentFloorSlug={currentFloorSlug}
-          floors={floors}
-          lang={lang}
-        />
-      </section>
-
-      <Divider />
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-overline">{t.display}</h2>
-        <label className="flex cursor-pointer items-center gap-2 text-body">
-          <input
-            type="checkbox"
-            checked={showGraph}
-            onChange={(e) => setShowGraph(e.target.checked)}
-            className="h-4 w-4 accent-[var(--brand)]"
-          />
-          {t.showGraph}
-        </label>
-      </section>
-
-      <Divider />
-
-      <AssistantPanel
-        building={buildingSlug}
-        floor={currentFloorSlug}
-        onRoute={(path) => setAiPath(path)}
-      />
-
-      <Divider />
-
-      <section className="flex flex-col gap-2 text-caption">
-        <Link href="/about" className="text-[color:var(--brand)] hover:underline">
-          {t.howWorks} →
-        </Link>
-      </section>
-    </div>
-  );
-
   return (
     <AppShell
       headerSlot={
@@ -244,8 +164,6 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
           {prettyBuildingName(buildingSlug)} · {currentFloor.name[lang]}
         </span>
       }
-      sidebar={sidebar}
-      sidebarTitle={t.controls}
     >
       <FloorMap
         map={currentFloor}
@@ -253,124 +171,222 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
         highlightedRoute={currentSegmentNodes}
         lang={lang}
       />
+
+      <Dock
+        lang={lang}
+        active={activeSection}
+        onSelect={(id) =>
+          setActiveSection((cur) => (cur === id ? null : id))
+        }
+        onClose={() => setActiveSection(null)}
+        summary={
+          activePath ? (
+            <RouteSummaryStrip
+              activePath={activePath}
+              aiAuthored={Boolean(aiPath)}
+              profile={profile}
+              lang={lang}
+              currentFloorSlug={currentFloorSlug}
+              floors={floors}
+              buildingSlug={buildingSlug}
+            />
+          ) : null
+        }
+      >
+        {activeSection === "plan" && (
+          <PlanPanel
+            lang={lang}
+            fromRef={fromRef}
+            toRef={toRef}
+            options={allRoomOptions}
+            onFromChange={setFromRef}
+            onToChange={setToRef}
+            onSwap={() => {
+              setFromRefState(toRef);
+              setToRefState(fromRef);
+              setAiPath(null);
+            }}
+          />
+        )}
+        {activeSection === "profile" && (
+          <ProfilePanel
+            lang={lang}
+            profileId={profileId}
+            onSelect={setProfileId}
+          />
+        )}
+        {activeSection === "floor" && (
+          <FloorPanel
+            lang={lang}
+            buildingSlug={buildingSlug}
+            floors={floors}
+            currentFloorSlug={currentFloorSlug}
+          />
+        )}
+        {activeSection === "view" && (
+          <ViewPanel
+            lang={lang}
+            showGraph={showGraph}
+            onShowGraphChange={setShowGraph}
+          />
+        )}
+        {activeSection === "assistant" && (
+          <AssistantPanel
+            building={buildingSlug}
+            floor={currentFloorSlug}
+            onRoute={(path) => {
+              setAiPath(path);
+            }}
+          />
+        )}
+        {activeSection === "info" && (
+          <InfoPanel
+            lang={lang}
+            buildingSlug={buildingSlug}
+            currentFloor={currentFloor}
+          />
+        )}
+      </Dock>
     </AppShell>
   );
 }
 
-function FloorSwitcher({
-  buildingSlug,
-  floors,
-  currentFloorSlug,
-  floorLabel,
+/* ─── Dock shell ──────────────────────────────────────────────────────────── */
+
+function Dock({
   lang,
+  active,
+  onSelect,
+  onClose,
+  summary,
+  children,
 }: {
-  buildingSlug: string;
-  floors: FloorMapData[];
-  currentFloorSlug: string;
-  floorLabel: string;
   lang: Lang;
+  active: SectionId | null;
+  onSelect: (id: SectionId) => void;
+  onClose: () => void;
+  summary: React.ReactNode;
+  children: React.ReactNode;
 }) {
+  const isEl = lang === "el";
+  const activeMeta = active ? SECTIONS.find((s) => s.id === active) : null;
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-overline">{floorLabel}</h2>
-      <div className="flex flex-wrap gap-1.5">
-        {floors.map((f) => {
-          const active = f.floorSlug === currentFloorSlug;
-          return (
-            <Link
-              key={f.floorSlug}
-              href={`/maps/${buildingSlug}/${f.floorSlug}`}
-              className={
-                "flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors " +
-                (active
-                  ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                  : "border-[var(--border)] bg-[var(--background)] text-[color:var(--foreground)] hover:bg-[var(--surface-2)]")
-              }
-            >
-              <span
+    <div
+      role="region"
+      aria-label={isEl ? "Έλεγχοι χάρτη" : "Map controls"}
+      className={
+        // Mobile: pinned to the bottom, full-width-ish.
+        // md+: floats top-left of the map area, fixed width.
+        "pointer-events-none absolute z-20 " +
+        "inset-x-3 bottom-3 " +
+        "md:inset-auto md:bottom-auto md:left-4 md:top-4 md:w-[400px]"
+      }
+    >
+      <div
+        className={
+          "pointer-events-auto flex flex-col overflow-hidden rounded-2xl border border-[var(--border)] " +
+          "bg-[var(--background)]/92 shadow-[var(--shadow-card)] backdrop-blur-md"
+        }
+      >
+        {summary && (
+          <div className="border-b border-[var(--border)]">{summary}</div>
+        )}
+
+        {/* Chip row */}
+        <div className="flex items-center gap-1 p-1.5 sm:gap-1.5 sm:p-2">
+          {SECTIONS.map((s) => {
+            const isActive = active === s.id;
+            const topic = isEl ? s.topicEl : s.topicEn;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => onSelect(s.id)}
+                aria-pressed={isActive}
+                aria-label={`${s.n} · ${topic}`}
+                title={`${s.n} · ${topic}`}
                 className={
-                  "font-mono text-[0.75rem] tabular-nums " +
-                  (active ? "text-white/80" : "text-[color:var(--muted-foreground)]")
+                  "group relative flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl text-[0.7rem] font-semibold transition-colors " +
+                  (isActive
+                    ? "bg-[var(--brand)] text-white"
+                    : "text-[color:var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[color:var(--foreground)]")
                 }
               >
-                L{f.level}
-              </span>
-              <span>{f.name[lang]}</span>
-            </Link>
-          );
-        })}
+                <span className="font-mono tabular-nums opacity-80">{s.n}</span>
+                {s.icon}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Expanded panel */}
+        {active && activeMeta && (
+          <div className="flex max-h-[60vh] flex-col gap-3 border-t border-[var(--border)] p-4 md:max-h-[70vh]">
+            <div className="flex items-start justify-between gap-3">
+              <PanelHeader n={activeMeta.n} topic={isEl ? activeMeta.topicEl : activeMeta.topicEn} />
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={isEl ? "Κλείσιμο" : "Close"}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-[color:var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[color:var(--foreground)]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex flex-col gap-3 overflow-y-auto">{children}</div>
+          </div>
+        )}
       </div>
-    </section>
+    </div>
   );
 }
 
-function RouteSummary({
+function PanelHeader({ n, topic }: { n: string; topic: string }) {
+  return (
+    <div className="flex items-baseline gap-3">
+      <span
+        aria-hidden
+        className="font-mono text-[1.6rem] font-bold leading-none tabular-nums tracking-[-0.04em]"
+        style={{ color: "var(--brand)" }}
+      >
+        {n}
+      </span>
+      <span className="flex flex-col gap-1">
+        <span className="text-overline text-[color:var(--brand)]">{topic}</span>
+        <span
+          aria-hidden
+          className="h-px w-16"
+          style={{
+            background:
+              "linear-gradient(to right, var(--brand) 0%, transparent 100%)",
+            opacity: 0.5,
+          }}
+        />
+      </span>
+    </div>
+  );
+}
+
+/* ─── Persistent route summary (above the chip row) ───────────────────────── */
+
+function RouteSummaryStrip({
   activePath,
   aiAuthored,
-  fromRef,
-  toRef,
   profile,
-  buildingSlug,
+  lang,
   currentFloorSlug,
   floors,
-  lang,
+  buildingSlug,
 }: {
-  activePath: MultiFloorPath | null;
+  activePath: MultiFloorPath;
   aiAuthored: boolean;
-  fromRef: RoomRef;
-  toRef: RoomRef;
   profile: Profile;
-  buildingSlug: string;
+  lang: Lang;
   currentFloorSlug: string;
   floors: FloorMapData[];
-  lang: Lang;
+  buildingSlug: string;
 }) {
   const isEl = lang === "el";
-  const tx = isEl
-    ? {
-        pickDifferent: "Επιλέξτε δύο διαφορετικά δωμάτια.",
-        noRouteFor: (label: string) =>
-          `Καμία διαδρομή για το προφίλ «${label.toLowerCase()}».`,
-        assistantRoute: "Διαδρομή βοηθού",
-        route: "Διαδρομή",
-        segments: "τμήματα",
-        cost: "κόστος",
-        profileSuffix: "προφίλ",
-        notOnFloor: "Αυτή η διαδρομή δεν περνά από αυτόν τον όροφο.",
-        continueOn: (name: string) => `Συνέχεια στον όροφο: ${name}`,
-      }
-    : {
-        pickDifferent: "Pick two different rooms.",
-        noRouteFor: (label: string) =>
-          `No route for the ${label.toLowerCase()} profile.`,
-        assistantRoute: "Assistant route",
-        route: "Route",
-        segments: "segments",
-        cost: "cost",
-        profileSuffix: "profile",
-        notOnFloor: "This route doesn't pass through this floor.",
-        continueOn: (name: string) => `Continue on ${name}`,
-      };
-
-  const base =
-    "rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-caption";
-  if (!activePath) {
-    if (
-      fromRef.floor === toRef.floor &&
-      fromRef.room === toRef.room
-    ) {
-      return <p className={base}>{tx.pickDifferent}</p>;
-    }
-    return (
-      <p
-        className={
-          base + " font-medium text-[color:color-mix(in_oklab,var(--warning),#000_15%)]"
-        }
-      >
-        {tx.noRouteFor(profileLabel(profile, lang))}
-      </p>
-    );
-  }
   const totalSegments = activePath.segments.reduce(
     (n, s) => n + Math.max(0, s.nodes.length - 1),
     0,
@@ -381,23 +397,31 @@ function RouteSummary({
   const otherFloors = activePath.segments.filter(
     (s) => s.floorSlug !== currentFloorSlug,
   );
-
   return (
-    <div className={base}>
-      <p
-        className={
-          "font-medium " +
-          (aiAuthored ? "text-[color:var(--brand)]" : "text-[color:var(--foreground)]")
-        }
-      >
-        {aiAuthored ? tx.assistantRoute : tx.route} · {totalSegments} {tx.segments} · {tx.cost} {activePath.cost.toFixed(1)}
-      </p>
-      <p className="mt-0.5">{profileLabel(profile, lang)} {tx.profileSuffix}</p>
+    <div className="flex flex-col gap-2 px-4 py-3">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-caption">
+        <span
+          className={
+            "font-semibold " +
+            (aiAuthored ? "text-[color:var(--brand)]" : "text-[color:var(--foreground)]")
+          }
+        >
+          {profileLabel(profile, lang)}
+        </span>
+        <span className="text-[color:var(--muted-foreground)]">
+          · {totalSegments} {isEl ? "τμήματα" : "segments"} · {isEl ? "κόστος" : "cost"}{" "}
+          {activePath.cost.toFixed(1)}
+        </span>
+      </div>
       {!onCurrent && otherFloors.length > 0 && (
-        <p className="mt-1.5 text-[color:var(--foreground)]">{tx.notOnFloor}</p>
+        <p className="text-[0.78rem] text-[color:color-mix(in_oklab,var(--warning),#000_15%)]">
+          {isEl
+            ? "Αυτή η διαδρομή δεν περνά από αυτόν τον όροφο."
+            : "This route doesn't pass through this floor."}
+        </p>
       )}
       {otherFloors.length > 0 && (
-        <ul className="mt-2 flex flex-col gap-1">
+        <ul className="flex flex-wrap gap-1.5">
           {otherFloors.map((seg) => {
             const f = floors.find((f) => f.floorSlug === seg.floorSlug);
             if (!f) return null;
@@ -408,14 +432,10 @@ function RouteSummary({
               <li key={seg.floorSlug}>
                 <Link
                   href={`/maps/${buildingSlug}/${seg.floorSlug}`}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 py-1 text-[color:var(--foreground)] hover:bg-[var(--surface-3)]"
+                  className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 py-0.5 text-[0.72rem] text-[color:var(--foreground)] hover:bg-[var(--surface-2)]"
                 >
-                  {above ? (
-                    <ArrowUp className="h-3.5 w-3.5" />
-                  ) : (
-                    <ArrowDown className="h-3.5 w-3.5" />
-                  )}
-                  {tx.continueOn(f.name[lang])}
+                  {above ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                  {f.name[lang]}
                 </Link>
               </li>
             );
@@ -425,6 +445,236 @@ function RouteSummary({
     </div>
   );
 }
+
+/* ─── Section panels ──────────────────────────────────────────────────────── */
+
+function PlanPanel({
+  lang,
+  fromRef,
+  toRef,
+  options,
+  onFromChange,
+  onToChange,
+  onSwap,
+}: {
+  lang: Lang;
+  fromRef: RoomRef;
+  toRef: RoomRef;
+  options: RoomOption[];
+  onFromChange: (v: RoomRef) => void;
+  onToChange: (v: RoomRef) => void;
+  onSwap: () => void;
+}) {
+  const isEl = lang === "el";
+  return (
+    <div className="flex flex-col gap-3">
+      <Field label={isEl ? "Από" : "From"}>
+        <RoomSelect value={fromRef} options={options} onChange={onFromChange} />
+      </Field>
+      <Field label={isEl ? "Προς" : "To"}>
+        <RoomSelect value={toRef} options={options} onChange={onToChange} />
+      </Field>
+      <button
+        type="button"
+        onClick={onSwap}
+        className="self-start rounded-md border border-[var(--border)] bg-[var(--background)] px-2.5 py-1 text-xs font-medium text-[color:var(--foreground)] hover:bg-[var(--surface-2)]"
+      >
+        {isEl ? "Αντιστροφή" : "Swap"}
+      </button>
+    </div>
+  );
+}
+
+type RoomOption = {
+  value: string;
+  floor: string;
+  room: string;
+  label: string;
+  floorName: string;
+};
+
+function ProfilePanel({
+  lang,
+  profileId,
+  onSelect,
+}: {
+  lang: Lang;
+  profileId: string;
+  onSelect: (id: string) => void;
+}) {
+  const isEl = lang === "el";
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-caption">
+        {isEl
+          ? "Το ίδιο γράφημα, διαφορετικά βάρη ανά προφίλ."
+          : "Same graph, different weights per profile."}
+      </p>
+      <div className="flex flex-col gap-1.5">
+        {PROFILE_LIST.map((p) => {
+          const isActive = p.id === profileId;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onSelect(p.id)}
+              className={
+                "flex items-center justify-between rounded-md border px-3 py-2 text-left text-body transition-colors " +
+                (isActive
+                  ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[color:var(--foreground)]"
+                  : "border-[var(--border)] bg-[var(--background)] hover:bg-[var(--surface-2)]")
+              }
+            >
+              <span className="font-medium">{profileLabel(p, lang)}</span>
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: "var(--brand)" }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function FloorPanel({
+  lang,
+  buildingSlug,
+  floors,
+  currentFloorSlug,
+}: {
+  lang: Lang;
+  buildingSlug: string;
+  floors: FloorMapData[];
+  currentFloorSlug: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {floors.map((f) => {
+        const active = f.floorSlug === currentFloorSlug;
+        return (
+          <Link
+            key={f.floorSlug}
+            href={`/maps/${buildingSlug}/${f.floorSlug}`}
+            className={
+              "flex items-center gap-3 rounded-md border px-3 py-2 text-body transition-colors " +
+              (active
+                ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[color:var(--foreground)]"
+                : "border-[var(--border)] bg-[var(--background)] hover:bg-[var(--surface-2)]")
+            }
+          >
+            <span
+              className={
+                "grid h-7 w-9 place-items-center rounded-md font-mono text-[0.72rem] tabular-nums " +
+                (active
+                  ? "bg-[var(--brand)] text-white"
+                  : "bg-[var(--surface-2)] text-[color:var(--muted-foreground)]")
+              }
+            >
+              L{f.level}
+            </span>
+            <span className="flex-1 font-medium">{f.name[lang]}</span>
+            <span className="text-caption">
+              {f.rooms.length} {lang === "el" ? "δωμάτια" : "rooms"}
+            </span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function ViewPanel({
+  lang,
+  showGraph,
+  onShowGraphChange,
+}: {
+  lang: Lang;
+  showGraph: boolean;
+  onShowGraphChange: (v: boolean) => void;
+}) {
+  const isEl = lang === "el";
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-caption">
+        {isEl
+          ? "Επιλογές οπτικοποίησης για διδακτική χρήση."
+          : "Visualization options for teaching demos."}
+      </p>
+      <label className="flex cursor-pointer items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-2 hover:bg-[var(--surface-2)]">
+        <input
+          type="checkbox"
+          checked={showGraph}
+          onChange={(e) => onShowGraphChange(e.target.checked)}
+          className="h-4 w-4 accent-[var(--brand)]"
+        />
+        <span className="flex flex-1 flex-col gap-0.5">
+          <span className="text-body font-medium">
+            {isEl ? "Εμφάνιση γραφήματος δρομολόγησης" : "Show routing graph"}
+          </span>
+          <span className="text-caption">
+            {isEl
+              ? "Επικάλυψη κόμβων και ακμών πάνω στην κάτοψη."
+              : "Overlay nodes and edges over the floor plan."}
+          </span>
+        </span>
+      </label>
+    </div>
+  );
+}
+
+function InfoPanel({
+  lang,
+  buildingSlug,
+  currentFloor,
+}: {
+  lang: Lang;
+  buildingSlug: string;
+  currentFloor: FloorMapData;
+}) {
+  const isEl = lang === "el";
+  const stats: Array<[string, string | number]> = [
+    [isEl ? "Κτίριο" : "Building", prettyBuildingName(buildingSlug)],
+    [isEl ? "Όροφος" : "Floor", currentFloor.name[lang]],
+    [isEl ? "Επίπεδο" : "Level", currentFloor.level],
+    [isEl ? "Δωμάτια" : "Rooms", currentFloor.rooms.length],
+    [isEl ? "Πόρτες" : "Doors", currentFloor.doors.length],
+    [isEl ? "Κόμβοι γραφήματος" : "Graph nodes", currentFloor.nodes.length],
+    [isEl ? "Ακμές γραφήματος" : "Graph edges", currentFloor.edges.length],
+  ];
+  return (
+    <div className="flex flex-col gap-4">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-caption">
+        {stats.map(([k, v]) => (
+          <div key={k} className="flex flex-col">
+            <dt className="text-overline">{k}</dt>
+            <dd className="text-body text-[color:var(--foreground)]">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="flex flex-col gap-1.5 text-caption">
+        <Link
+          href="/about"
+          className="font-medium text-[color:var(--brand)] hover:underline"
+        >
+          {isEl ? "Πώς λειτουργεί;" : "How does this work?"} →
+        </Link>
+        <Link
+          href="/"
+          className="font-medium text-[color:var(--brand)] hover:underline"
+        >
+          {isEl ? "Επιστροφή στην αρχική" : "Back to the landing"} →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Shared form primitives ──────────────────────────────────────────────── */
 
 function Field({
   label,
@@ -440,14 +690,6 @@ function Field({
     </label>
   );
 }
-
-type RoomOption = {
-  value: string;
-  floor: string;
-  room: string;
-  label: string;
-  floorName: string;
-};
 
 function RoomSelect({
   value,
@@ -490,15 +732,4 @@ function RoomSelect({
       ))}
     </select>
   );
-}
-
-function Divider() {
-  return <div className="h-px w-full bg-[var(--border)]" />;
-}
-
-function prettyBuildingName(slug: string): string {
-  return slug
-    .split(/[-_]/)
-    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
-    .join(" ");
 }
