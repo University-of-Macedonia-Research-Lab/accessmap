@@ -1,0 +1,139 @@
+"use client";
+
+/**
+ * App layout shell: a slim header, an optional left sidebar (off-canvas drawer
+ * below `lg`), and a main content area that fills the rest of the viewport.
+ * Pages compose the shell by passing `header`, `sidebar`, and `children` —
+ * keeping the chrome (logo, nav, menu button) consistent across routes.
+ */
+import { useState, type ReactNode } from "react";
+import Link from "next/link";
+import { Menu } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/theme-toggle";
+
+type Props = {
+  /** Slot rendered to the right of the brand in the header (e.g. floor name). */
+  headerSlot?: ReactNode;
+  /** Sidebar contents — also rendered inside the mobile drawer. Omit to hide. */
+  sidebar?: ReactNode;
+  /** Title shown at the top of the mobile drawer when open. */
+  sidebarTitle?: string;
+  children: ReactNode;
+};
+
+export function AppShell({
+  headerSlot,
+  sidebar,
+  sidebarTitle = "Tools",
+  children,
+}: Props) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="flex h-dvh flex-col bg-[var(--surface-1)]">
+      <Header
+        onMenuClick={() => setOpen(true)}
+        showMenu={Boolean(sidebar)}
+        slot={headerSlot}
+      />
+
+      <div className="flex min-h-0 flex-1">
+        {sidebar && (
+          <aside
+            className="hidden w-80 shrink-0 overflow-y-auto border-r border-[var(--border)] bg-[var(--surface-1)] lg:block"
+            aria-label="Sidebar"
+          >
+            <div className="flex flex-col gap-4 p-4">{sidebar}</div>
+          </aside>
+        )}
+
+        <main className="relative min-w-0 flex-1 overflow-y-auto">
+          {children}
+        </main>
+      </div>
+
+      {sidebar && (
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent side="left" className="w-[88vw] max-w-sm p-0">
+            <div className="flex flex-col gap-1 px-4 pt-4">
+              <SheetTitle className="text-h3">{sidebarTitle}</SheetTitle>
+              <SheetDescription className="sr-only">
+                Map controls and assistant
+              </SheetDescription>
+            </div>
+            <div className="flex flex-col gap-4 overflow-y-auto p-4">
+              {sidebar}
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
+    </div>
+  );
+}
+
+function Header({
+  onMenuClick,
+  showMenu,
+  slot,
+}: {
+  onMenuClick: () => void;
+  showMenu: boolean;
+  slot?: ReactNode;
+}) {
+  return (
+    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--background)] px-3 sm:px-5">
+      {showMenu && (
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="grid h-9 w-9 place-items-center rounded-md border border-transparent text-[color:var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[color:var(--foreground)] lg:hidden"
+          aria-label="Open sidebar"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      )}
+
+      <Link href="/" className="flex items-center gap-2 text-[color:var(--foreground)]">
+        <BrandMark />
+        <span className="text-h3 leading-none">AccessMap</span>
+      </Link>
+
+      <div className="ml-2 hidden text-caption sm:block">{slot}</div>
+
+      <nav className="ml-auto flex items-center gap-1 text-body">
+        <NavLink href="/">Maps</NavLink>
+        <NavLink href="/about">About</NavLink>
+        <ThemeToggle />
+      </nav>
+    </header>
+  );
+}
+
+function NavLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-md px-2.5 py-1.5 text-[color:var(--muted-foreground)] transition-colors hover:bg-[var(--surface-2)] hover:text-[color:var(--foreground)]"
+    >
+      {children}
+    </Link>
+  );
+}
+
+function BrandMark() {
+  return (
+    <span
+      className="grid h-7 w-7 place-items-center rounded-md text-[11px] font-semibold tracking-wide text-[color:var(--brand-foreground)]"
+      style={{ background: "var(--brand)" }}
+      aria-hidden="true"
+    >
+      AM
+    </span>
+  );
+}

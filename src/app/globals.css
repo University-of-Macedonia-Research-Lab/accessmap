@@ -1,0 +1,262 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular,
+    "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* shadcn defaults — the underlying neutral system kept intact. */
+  --background: oklch(0.99 0.005 95);
+  --foreground: oklch(0.18 0.02 270);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.02 270);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.02 270);
+  --primary: oklch(0.55 0.21 285);
+  --primary-foreground: oklch(0.985 0.005 95);
+  --secondary: oklch(0.97 0.01 270);
+  --secondary-foreground: oklch(0.205 0.02 270);
+  --muted: oklch(0.97 0.01 270);
+  --muted-foreground: oklch(0.5 0.02 270);
+  --accent: oklch(0.96 0.02 285);
+  --accent-foreground: oklch(0.3 0.15 285);
+  --destructive: oklch(0.6 0.21 27);
+  --border: oklch(0.9 0.01 270);
+  --input: oklch(0.92 0.01 270);
+  --ring: oklch(0.55 0.21 285);
+  --chart-1: oklch(0.55 0.21 285);
+  --chart-2: oklch(0.65 0.15 200);
+  --chart-3: oklch(0.7 0.18 60);
+  --chart-4: oklch(0.6 0.18 150);
+  --chart-5: oklch(0.65 0.15 340);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0.005 95);
+  --sidebar-foreground: oklch(0.18 0.02 270);
+  --sidebar-primary: oklch(0.55 0.21 285);
+  --sidebar-primary-foreground: oklch(0.985 0.005 95);
+  --sidebar-accent: oklch(0.96 0.02 285);
+  --sidebar-accent-foreground: oklch(0.3 0.15 285);
+  --sidebar-border: oklch(0.9 0.01 270);
+  --sidebar-ring: oklch(0.55 0.21 285);
+
+  /* AccessMap design tokens — modern indigo-violet brand, cyan feature accent. */
+  --brand: oklch(0.55 0.21 285);                  /* indigo-violet 500 */
+  --brand-strong: oklch(0.45 0.22 285);           /* deeper for hover/active */
+  --brand-foreground: oklch(0.99 0.005 95);
+  --brand-soft: oklch(0.95 0.04 285);
+  --feature: oklch(0.62 0.13 215);                /* cyan-ish, for ♿/E/S icons */
+  --route: oklch(0.55 0.23 290);                  /* slightly more saturated than brand */
+  --route-halo: oklch(1 0 0);                     /* white halo around route */
+  --accent-soft: oklch(0.93 0.07 80);             /* warm hover (kept) */
+
+  --surface-1: oklch(0.985 0.005 95);             /* page background — warm off-white */
+  --surface-2: oklch(0.965 0.008 95);             /* map canvas, panels */
+  --surface-3: oklch(0.94 0.012 95);              /* hover/strong panel */
+
+  /* Floor plan visual primitives. */
+  --floor-base: oklch(0.985 0.008 95);            /* the building's interior fill */
+  --wall-exterior: oklch(0.22 0.02 270);          /* heavy exterior wall ink */
+  --wall-interior: oklch(0.4 0.02 270);           /* interior partition */
+  --window-glass: oklch(0.78 0.10 215);           /* light cyan glass */
+  --door-mark: oklch(1 0 0);
+
+  --success: oklch(0.65 0.13 150);
+  --warning: oklch(0.74 0.13 75);
+  --danger:  oklch(0.6  0.21 27);
+
+  --shadow-card: 0 1px 0 oklch(0 0 0 / 4%), 0 6px 24px -8px oklch(0 0 0 / 8%);
+}
+
+.dark {
+  --background: oklch(0.16 0.01 270);
+  --foreground: oklch(0.97 0.005 95);
+  --card: oklch(0.2 0.015 270);
+  --card-foreground: oklch(0.97 0.005 95);
+  --popover: oklch(0.2 0.015 270);
+  --popover-foreground: oklch(0.97 0.005 95);
+  --primary: oklch(0.7 0.21 285);
+  --primary-foreground: oklch(0.18 0.02 270);
+  --secondary: oklch(0.27 0.02 270);
+  --secondary-foreground: oklch(0.97 0.005 95);
+  --muted: oklch(0.27 0.02 270);
+  --muted-foreground: oklch(0.7 0.02 270);
+  --accent: oklch(0.3 0.05 285);
+  --accent-foreground: oklch(0.85 0.1 285);
+  --destructive: oklch(0.7 0.19 22);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.7 0.21 285);
+  --chart-1: oklch(0.7 0.21 285);
+  --chart-2: oklch(0.7 0.15 200);
+  --chart-3: oklch(0.75 0.18 60);
+  --chart-4: oklch(0.65 0.18 150);
+  --chart-5: oklch(0.7 0.15 340);
+  --sidebar: oklch(0.18 0.015 270);
+  --sidebar-foreground: oklch(0.97 0.005 95);
+  --sidebar-primary: oklch(0.7 0.21 285);
+  --sidebar-primary-foreground: oklch(0.18 0.02 270);
+  --sidebar-accent: oklch(0.3 0.05 285);
+  --sidebar-accent-foreground: oklch(0.85 0.1 285);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.7 0.21 285);
+
+  --brand: oklch(0.7 0.21 285);
+  --brand-strong: oklch(0.78 0.21 285);
+  --brand-foreground: oklch(0.18 0.02 270);
+  --brand-soft: oklch(0.3 0.06 285);
+  --feature: oklch(0.72 0.14 215);
+  --route: oklch(0.78 0.22 290);
+  --route-halo: oklch(0.16 0.01 270);             /* dark halo on dark mode */
+  --accent-soft: oklch(0.4 0.08 80);
+  --surface-1: oklch(0.16 0.01 270);
+  --surface-2: oklch(0.2 0.015 270);
+  --surface-3: oklch(0.25 0.02 270);
+
+  --floor-base: oklch(0.22 0.015 270);
+  --wall-exterior: oklch(0.92 0.01 270);
+  --wall-interior: oklch(0.7 0.015 270);
+  --window-glass: oklch(0.6 0.12 215);
+  --door-mark: oklch(0.3 0.02 270);
+
+  --shadow-card: 0 1px 0 oklch(1 0 0 / 4%), 0 6px 24px -8px oklch(0 0 0 / 50%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01", "ss03";
+  }
+  html {
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+/*
+ * Typography utilities — the documented type scale used across the app.
+ * Sizes follow a ~1.25 modular scale; weights and tracking are tuned for an
+ * app UI (denser than a marketing site).
+ */
+@layer utilities {
+  .text-display {
+    font-size: 3rem;            /* 48px */
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  .text-h1 {
+    font-size: 2rem;            /* 32px */
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .text-h2 {
+    font-size: 1.5rem;          /* 24px */
+    line-height: 1.3;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  .text-h3 {
+    font-size: 1.125rem;        /* 18px */
+    line-height: 1.4;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .text-lead {
+    font-size: 1.0625rem;       /* 17px */
+    line-height: 1.55;
+    font-weight: 400;
+    color: var(--muted-foreground);
+  }
+  .text-body {
+    font-size: 0.9375rem;       /* 15px */
+    line-height: 1.55;
+  }
+  .text-caption {
+    font-size: 0.8125rem;       /* 13px */
+    line-height: 1.45;
+    color: var(--muted-foreground);
+  }
+  .text-overline {
+    font-size: 0.6875rem;       /* 11px */
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+}
+
+/*
+ * Leaflet visual chrome: lift its zoom buttons into our type scale and
+ * surface tokens so the map feels like part of the app, not a plugin.
+ */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--surface-2);
+}
+.leaflet-control-zoom a {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+  font-weight: 500;
+}
+.leaflet-control-zoom a:hover {
+  background: var(--surface-3) !important;
+}
+.leaflet-bar {
+  box-shadow: var(--shadow-card) !important;
+  border: none !important;
+}

@@ -1,0 +1,39 @@
+// AccessMap database schema.
+// Floor *geometry* lives in JSON files under src/data/maps; the database
+// stores the catalog (which buildings/floors exist) plus user-facing
+// state we can't bake into static files.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Building {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  nameEn    String
+  nameEl    String
+  floors    Floor[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Floor {
+  id          String   @id @default(cuid())
+  buildingId  String
+  building    Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  slug        String
+  level       Int
+  nameEn      String
+  nameEl      String
+  /// Path (relative to repo root) of the JSON file that holds this floor's geometry.
+  dataPath    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([buildingId, slug])
+}
