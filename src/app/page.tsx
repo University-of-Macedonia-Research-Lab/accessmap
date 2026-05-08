@@ -25,10 +25,13 @@ export const metadata = {
 export default function Home() {
   return (
     <AppShell>
-      <article className="relative mx-auto w-full max-w-5xl px-5 py-16 sm:px-8 sm:py-24">
+      {/* Hero is full-bleed — it spans the entire main column, edge to edge,
+          with its own gradient surface. The constrained article below it
+          carries the rest of the page. */}
+      <Hero />
+      <article className="relative mx-auto w-full max-w-5xl px-5 py-20 sm:px-8 sm:py-28">
         <Backdrop />
-        <Hero />
-        <main className="relative mt-20 flex flex-col gap-24 md:mt-28 md:gap-32">
+        <main className="relative flex flex-col gap-24 md:gap-32">
           <Pillars />
           <WebAccessibility n="01" />
           <MapAccessibility n="02" />
@@ -73,7 +76,7 @@ function Hero() {
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative isolate overflow-hidden rounded-[2rem] border border-[var(--border)] shadow-[var(--shadow-card)]"
+      className="relative isolate overflow-hidden border-b border-[var(--border)]"
       style={{
         background:
           "linear-gradient(180deg, var(--brand-soft) 0%, var(--background) 70%)",
@@ -85,7 +88,7 @@ function Hero() {
           later sections so the whole page reads as one drawing. */}
       <HeroSchematic />
 
-      <div className="relative grid items-center gap-10 p-7 sm:p-10 md:grid-cols-[1.15fr_1fr] md:p-14 md:gap-14">
+      <div className="relative mx-auto grid w-full max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 sm:py-24 md:grid-cols-[1.15fr_1fr] md:gap-14 md:py-28 lg:py-32">
         <div className="flex flex-col items-start gap-6">
           <BrandBadge />
           <h1
