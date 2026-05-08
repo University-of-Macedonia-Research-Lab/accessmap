@@ -26,27 +26,17 @@ export default function Home() {
   return (
     <AppShell>
       <article className="relative mx-auto w-full max-w-5xl px-5 py-16 sm:px-8 sm:py-24">
+        <Backdrop />
         <Hero />
-        <Rail>
-          <Stop n="01" topic="Web accessibility">
-            <WebAccessibility />
-          </Stop>
-          <Stop n="02" topic="Map accessibility">
-            <MapAccessibility />
-          </Stop>
-          <Stop n="03" topic="Architecture">
-            <Architecture />
-          </Stop>
-          <Stop n="04" topic="Algorithms">
-            <Algorithms />
-          </Stop>
-          <Stop n="05" topic="How to draw a map">
-            <DrawingAMap />
-          </Stop>
-          <Stop n="06" topic="AI assistant">
-            <AISection />
-          </Stop>
-        </Rail>
+        <main className="relative mt-20 flex flex-col gap-24 md:mt-28 md:gap-32">
+          <Pillars />
+          <WebAccessibility n="01" />
+          <MapAccessibility n="02" />
+          <Architecture n="03" />
+          <Algorithms n="04" />
+          <DrawingAMap n="05" />
+          <AISection n="06" />
+        </main>
         <FinalCTA />
         <Footer />
       </article>
@@ -55,112 +45,23 @@ export default function Home() {
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/*  Rail — a route-themed vertical thread that connects every section, with   */
-/*  the same halo + brand-line idiom we draw on the actual map. Hidden below  */
-/*  md to keep it from crowding small screens.                                */
+/*  Backdrop — a quiet blueprint-y dot grid behind everything except the      */
+/*  hero (which has its own gradient surface). Establishes a single visual    */
+/*  ground that ties every section together without any literal connector.   */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-function Rail({ children }: { children: React.ReactNode }) {
+function Backdrop() {
   return (
-    <section
-      aria-label="The journey"
-      className="relative mt-20 flex flex-col gap-24 md:mt-28 md:pl-20"
-    >
-      {/* Halo (white/dark stroke) */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute hidden md:block"
-        style={{
-          left: "calc(2rem - 5px)",
-          top: 0,
-          bottom: 0,
-          width: "10px",
-          background: "var(--route-halo)",
-          opacity: 0.55,
-          borderRadius: "999px",
-        }}
-      />
-      {/* Brand line on top */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute hidden md:block"
-        style={{
-          left: "calc(2rem - 1.5px)",
-          top: 0,
-          bottom: 0,
-          width: "3px",
-          background:
-            "linear-gradient(to bottom, var(--brand) 0%, var(--brand) 92%, transparent 100%)",
-          borderRadius: "999px",
-        }}
-      />
-      {/* Pillars float at the very top of the rail. */}
-      <Pillars />
-      {children}
-    </section>
-  );
-}
-
-function Stop({
-  n,
-  topic,
-  children,
-}: {
-  n: string;
-  topic: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="relative">
-      {/* Marker — drawn as a route endpoint (halo + filled brand circle), with
-          the section number inside. Aligned to the Rail's vertical line. */}
-      <div
-        aria-hidden
-        className="absolute hidden md:flex"
-        style={{
-          left: "calc(2rem - 22px)",
-          top: "0.25rem",
-          width: "44px",
-          height: "44px",
-          borderRadius: "999px",
-          background: "var(--route-halo)",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: "var(--shadow-card)",
-        }}
-      >
-        <div
-          style={{
-            width: "32px",
-            height: "32px",
-            borderRadius: "999px",
-            background: "var(--brand)",
-            color: "white",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "var(--font-sans)",
-            fontSize: "0.7rem",
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-          }}
-        >
-          {n}
-        </div>
-      </div>
-      {/* Mobile-only mini chip so the section numbers stay legible without the rail. */}
-      <span
-        aria-hidden
-        className="mb-3 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--background)] px-2.5 py-1 text-overline md:hidden"
-      >
-        <span
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ background: "var(--brand)" }}
-        />
-        {n} · {topic}
-      </span>
-      {children}
-    </div>
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 -z-10"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle at 1px 1px, var(--foreground) 1px, transparent 0)",
+        backgroundSize: "26px 26px",
+        opacity: 0.04,
+      }}
+    />
   );
 }
 
@@ -170,31 +71,35 @@ function Stop({
 
 function Hero() {
   return (
-    <section className="relative">
-      {/* Soft brand-tinted glow behind the hero — sits beneath the article
-          padding so the rest of the page reads on its neutral surface. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-[420px] w-[120%] -translate-x-1/2 opacity-70"
-        style={{
-          background:
-            "radial-gradient(60% 50% at 50% 30%, var(--brand-soft), transparent 70%)",
-        }}
-      />
+    <section
+      aria-labelledby="hero-title"
+      className="relative isolate overflow-hidden rounded-[2rem] border border-[var(--border)] shadow-[var(--shadow-card)]"
+      style={{
+        background:
+          "linear-gradient(180deg, var(--brand-soft) 0%, var(--background) 70%)",
+      }}
+    >
+      {/* Quiet schematic motif behind the hero — large, low-opacity outline
+          of a building footprint that bleeds off the right edge. Pure
+          decoration; the same vocabulary will recur as small accents in
+          later sections so the whole page reads as one drawing. */}
+      <HeroSchematic />
 
-      <div className="grid items-center gap-12 md:grid-cols-[1.15fr_1fr]">
-        <div className="flex flex-col items-start gap-7">
+      <div className="relative grid items-center gap-10 p-7 sm:p-10 md:grid-cols-[1.15fr_1fr] md:p-14 md:gap-14">
+        <div className="flex flex-col items-start gap-6">
           <BrandBadge />
-          <h1 className="text-display max-w-[18ch] sm:text-[3.75rem] sm:leading-[1.05]">
-            Indoor accessibility, drawn from data.
+          <h1
+            id="hero-title"
+            className="text-display max-w-[20ch] sm:text-[3.5rem] sm:leading-[1.05]"
+          >
+            How an indoor accessibility map is built.
           </h1>
-          <p className="text-lead max-w-[60ch]">
-            AccessMap is a teaching project that explains, end to end, how a
-            modern accessibility map is built — from the JSON that describes a
-            floor, to the graph algorithms that route a wheelchair around a
-            flight of stairs, to the AI assistant that answers{" "}
-            <em>&ldquo;how do I get to room 404?&rdquo;</em> — using the same
-            primitives you can read in the source.
+          <p className="text-lead max-w-[58ch]">
+            AccessMap is a self-contained walkthrough of the design end to
+            end — the JSON that describes a floor, the graph algorithm that
+            routes a wheelchair around a flight of stairs, and the AI
+            assistant that answers <em>&ldquo;how do I get to room 404?&rdquo;</em>
+            — using the same primitives you can read in the source.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Link
@@ -213,17 +118,77 @@ function Hero() {
             </Link>
           </div>
 
-          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-caption">
-            <Stat label="WCAG 2.2" value="AA" />
-            <Stat label="Pathfinding" value="A* + Dijkstra" />
-            <Stat label="Profiles" value="3 (default · wheelchair · low-vision)" />
-            <Stat label="AI" value="Claude tool-use" />
-          </div>
+          <ul className="mt-1 grid w-full max-w-md grid-cols-2 gap-x-5 gap-y-2 text-caption">
+            <LearnItem label="A. Web a11y" body="WCAG 2.2 AA basics" />
+            <LearnItem label="B. Map a11y" body="Per-profile routing" />
+            <LearnItem label="C. Algorithms" body="A* + Dijkstra" />
+            <LearnItem label="D. AI tools" body="Claude tool-use" />
+          </ul>
         </div>
 
         <HeroVisual />
       </div>
     </section>
+  );
+}
+
+function LearnItem({ label, body }: { label: string; body: string }) {
+  return (
+    <li className="flex items-baseline gap-2">
+      <span
+        className="font-mono text-[0.7rem] tracking-[0.05em]"
+        style={{ color: "var(--brand)" }}
+      >
+        {label}
+      </span>
+      <span className="text-[color:var(--muted-foreground)]">{body}</span>
+    </li>
+  );
+}
+
+/** Decorative schematic for the hero: a soft-stroked floor plan outline +
+ *  cross-hatch grid in low-opacity brand. The same architectural vocabulary
+ *  reappears in `SectionOrnament` so the whole page reads as one drawing. */
+function HeroSchematic() {
+  return (
+    <svg
+      aria-hidden
+      className="pointer-events-none absolute -right-20 -top-16 hidden h-[120%] w-[70%] opacity-[0.08] md:block"
+      viewBox="0 0 600 500"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      {/* outer outline */}
+      <rect
+        x="40" y="60" width="500" height="380"
+        fill="none"
+        stroke="var(--brand)"
+        strokeWidth="3"
+        rx="14"
+      />
+      {/* corridor band */}
+      <line x1="40" y1="240" x2="540" y2="240" stroke="var(--brand)" strokeWidth="1.5" />
+      <line x1="40" y1="280" x2="540" y2="280" stroke="var(--brand)" strokeWidth="1.5" />
+      {/* room dividers */}
+      {[180, 320, 460].map((x) => (
+        <line key={`u${x}`} x1={x} y1="60" x2={x} y2="240" stroke="var(--brand)" strokeWidth="1.5" />
+      ))}
+      {[160, 280, 400].map((x) => (
+        <line key={`l${x}`} x1={x} y1="280" x2={x} y2="440" stroke="var(--brand)" strokeWidth="1.5" />
+      ))}
+      {/* a few node dots */}
+      {[[110,150],[250,150],[390,150],[100,360],[340,360],[470,360]].map(([x,y],i) => (
+        <circle key={i} cx={x} cy={y} r="6" fill="var(--brand)" />
+      ))}
+      {/* a meandering route line */}
+      <polyline
+        points="100,400 100,260 340,260 340,150 250,150"
+        fill="none"
+        stroke="var(--brand)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -349,15 +314,6 @@ function BrandBadge() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <span>
-      <span className="text-[color:var(--muted-foreground)]">{label}</span>
-      <span className="mx-1.5 text-[color:var(--muted-foreground)]">·</span>
-      <span className="text-[color:var(--foreground)]">{value}</span>
-    </span>
-  );
-}
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Pillars                                                                   */
@@ -420,7 +376,7 @@ function Pillar({
 /*  Web accessibility                                                         */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-function WebAccessibility() {
+function WebAccessibility({ n }: { n: string }) {
   const items = [
     {
       icon: <KeyRound className="h-5 w-5" />,
@@ -449,7 +405,9 @@ function WebAccessibility() {
   ];
   return (
     <Section
-      kicker="Accessibility on the web"
+      n={n}
+      ornament="tr"
+      kicker="Web accessibility"
       title="The product itself has to be reachable."
       lead="Before a map can route a wheelchair through a building, the page that hosts it has to be operable by a keyboard, parsable by a screen reader, and legible to someone with low vision. Those are the table stakes — WCAG 2.2 AA — and they're encoded in our component primitives, not bolted on at the end."
     >
@@ -478,10 +436,12 @@ function WebAccessibility() {
 /*  Map accessibility                                                         */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-function MapAccessibility() {
+function MapAccessibility({ n }: { n: string }) {
   return (
     <Section
-      kicker="Accessibility on a map"
+      n={n}
+      ornament="tl"
+      kicker="Map accessibility"
       title="A route that doesn't exist for everyone is the wrong route."
       lead="Most online maps treat the world as if everyone walks the same way. They don't. AccessMap routes per profile — encoding the constraints of mobility, vision, and sensory impairment as edge weights on the same graph — so the answer to “how do I get there?” is shaped by who is asking."
     >
@@ -536,9 +496,11 @@ function MapAccessibility() {
 /*  Architecture                                                              */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-function Architecture() {
+function Architecture({ n }: { n: string }) {
   return (
     <Section
+      n={n}
+      ornament="tr"
       kicker="Architecture"
       title="One graph, three readers."
       lead="A floor is described as data — geometry plus a graph that lives alongside it. The renderer reads the geometry to draw, the pathfinder reads the graph to route, and the AI assistant reads both through tools. None of them duplicates the other."
@@ -733,9 +695,11 @@ function DefList({ items }: { items: Array<[string, string]> }) {
 /*  Algorithms                                                                */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-function Algorithms() {
+function Algorithms({ n }: { n: string }) {
   return (
     <Section
+      n={n}
+      ornament="bl"
       kicker="Algorithms"
       title="A* on a single floor, Dijkstra across them."
       lead="The pathfinder is small enough to read in one sitting. The interesting move is in the cost function — distance multiplied by the heaviest profile multiplier on the edge — which is what makes the same graph yield three different routes."
@@ -804,7 +768,7 @@ const cost = baseDistance * edgeMultiplier(edge.features, profile);`}
 /*  How to draw a map                                                         */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-function DrawingAMap() {
+function DrawingAMap({ n }: { n: string }) {
   const steps: Array<{ n: string; title: string; body: React.ReactNode }> = [
     {
       n: "01",
@@ -879,6 +843,8 @@ function DrawingAMap() {
   ];
   return (
     <Section
+      n={n}
+      ornament="tl"
       kicker="How to draw a map"
       title="JSON in, top-view floor plan out."
       lead="Authoring a new floor is six small decisions, in order. None of them require a graphics tool — the renderer composes the SVG from the JSON at runtime."
@@ -907,9 +873,11 @@ function DrawingAMap() {
 /*  AI                                                                        */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-function AISection() {
+function AISection({ n }: { n: string }) {
   return (
     <Section
+      n={n}
+      ornament="br"
       kicker="AI assistant"
       title="A wayfinder that doesn't make up rooms."
       lead="The assistant is Claude Opus 4.7 with adaptive thinking and exactly two tools — find_room and find_route — both of which call the same library code the manual route picker uses. The model never has to invent a node id or a path; it asks."
@@ -951,47 +919,11 @@ function AISection() {
 function FinalCTA() {
   return (
     <section
-      className="relative mt-24 flex flex-col items-start gap-5 rounded-3xl border border-[var(--border)] p-8 shadow-[var(--shadow-card)] sm:p-12"
+      className="relative mt-24 overflow-hidden rounded-3xl border border-[var(--border)] p-8 shadow-[var(--shadow-card)] sm:p-12"
       style={{ background: "var(--brand-soft)" }}
     >
-      {/* Tail of the rail descends into this CTA, ending in a route endpoint
-          to visually close the journey. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-24 hidden md:block"
-        style={{ left: "calc(50% - 1.5px)", width: "3px", height: "96px" }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(to bottom, transparent 0%, var(--brand) 30%, var(--brand) 100%)",
-            borderRadius: "999px",
-          }}
-        />
-      </div>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-3 hidden md:block"
-        style={{
-          left: "calc(50% - 9px)",
-          width: "18px",
-          height: "18px",
-          borderRadius: "999px",
-          background: "var(--route-halo)",
-          boxShadow: "var(--shadow-card)",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: "4px",
-            borderRadius: "999px",
-            background: "var(--brand)",
-          }}
-        />
-      </div>
+      <SectionOrnament position="tr" />
+      <div className="relative flex flex-col items-start gap-5">
 
       <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand)] text-white">
         <Accessibility className="h-5 w-5" />
@@ -1019,6 +951,7 @@ function FinalCTA() {
         >
           Read the technical reference
         </Link>
+      </div>
       </div>
     </section>
   );
@@ -1055,25 +988,127 @@ function Footer() {
 /* ────────────────────────────────────────────────────────────────────────── */
 
 function Section({
+  n,
   kicker,
   title,
   lead,
   children,
+  ornament = "tl",
 }: {
+  /** Section number ("01"–"06"). When given, renders the numbered header
+   *  treatment with the recurring schematic ornament. */
+  n?: string;
   kicker: string;
   title: string;
   lead?: string;
   children?: React.ReactNode;
+  /** Where the section ornament is placed. Each section uses a slightly
+   *  different anchor so the same motif feels like one drawing whose
+   *  details appear in different places as you scroll. */
+  ornament?: "tl" | "tr" | "bl" | "br";
 }) {
   return (
-    <section className="flex flex-col gap-6">
+    <section className="relative flex flex-col gap-6">
+      <SectionOrnament position={ornament} />
       <header className="flex flex-col gap-3">
-        <p className="text-overline text-[color:var(--brand)]">{kicker}</p>
+        {n ? (
+          <NumberedKicker n={n} topic={kicker} />
+        ) : (
+          <p className="text-overline text-[color:var(--brand)]">{kicker}</p>
+        )}
         <h2 className="text-h1 max-w-[24ch]">{title}</h2>
         {lead && <p className="text-lead max-w-[60ch]">{lead}</p>}
       </header>
       {children}
     </section>
+  );
+}
+
+function NumberedKicker({ n, topic }: { n: string; topic: string }) {
+  return (
+    <p className="flex items-center gap-3">
+      <span
+        className="inline-flex items-baseline gap-1.5 rounded-full border border-[var(--border)] bg-[var(--background)] px-2.5 py-1"
+        aria-hidden
+      >
+        <span
+          className="font-mono text-[0.7rem] font-bold tracking-[0.06em]"
+          style={{ color: "var(--brand)" }}
+        >
+          {n}
+        </span>
+        <span
+          className="h-1 w-1 rounded-full"
+          style={{ background: "var(--brand)" }}
+        />
+      </span>
+      <span className="text-overline text-[color:var(--brand)]">{topic}</span>
+    </p>
+  );
+}
+
+/** A small architectural ornament that recurs across every section: an
+ *  L-shaped corner bracket plus a cluster of 3 dots, drawn in low-opacity
+ *  brand. Its anchor point varies per section so the same vocabulary
+ *  appears in different parts of the page — a quiet way to say "this is
+ *  one document" without drawing a literal line between sections. */
+function SectionOrnament({
+  position,
+}: {
+  position: "tl" | "tr" | "bl" | "br";
+}) {
+  // Compute placement
+  const anchors: Record<typeof position, string> = {
+    tl: "top-0 left-0",
+    tr: "top-0 right-0",
+    bl: "bottom-0 left-0",
+    br: "bottom-0 right-0",
+  };
+  // SVG geometry per position so the bracket points outward, away from the
+  // section content.
+  const viewBox = "0 0 64 64";
+  let bracket = "";
+  let dots: Array<[number, number]> = [];
+  switch (position) {
+    case "tl":
+      bracket = "M2,22 L2,2 L22,2";
+      dots = [[34, 6], [42, 6], [50, 6]];
+      break;
+    case "tr":
+      bracket = "M62,22 L62,2 L42,2";
+      dots = [[14, 6], [22, 6], [30, 6]];
+      break;
+    case "bl":
+      bracket = "M2,42 L2,62 L22,62";
+      dots = [[34, 58], [42, 58], [50, 58]];
+      break;
+    case "br":
+      bracket = "M62,42 L62,62 L42,62";
+      dots = [[14, 58], [22, 58], [30, 58]];
+      break;
+  }
+  return (
+    <svg
+      aria-hidden
+      className={
+        "pointer-events-none absolute hidden h-12 w-12 md:block " +
+        anchors[position]
+      }
+      viewBox={viewBox}
+      style={{ color: "var(--brand)", opacity: 0.32 }}
+    >
+      <path
+        d={bracket}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {dots.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="1.6" fill="currentColor" />
+      ))}
+    </svg>
   );
 }
 
