@@ -25,19 +25,142 @@ export const metadata = {
 export default function Home() {
   return (
     <AppShell>
-      <article className="mx-auto flex w-full max-w-5xl flex-col gap-24 px-5 py-16 sm:px-8 sm:py-24">
+      <article className="relative mx-auto w-full max-w-5xl px-5 py-16 sm:px-8 sm:py-24">
         <Hero />
-        <Pillars />
-        <WebAccessibility />
-        <MapAccessibility />
-        <Architecture />
-        <Algorithms />
-        <DrawingAMap />
-        <AISection />
+        <Rail>
+          <Stop n="01" topic="Web accessibility">
+            <WebAccessibility />
+          </Stop>
+          <Stop n="02" topic="Map accessibility">
+            <MapAccessibility />
+          </Stop>
+          <Stop n="03" topic="Architecture">
+            <Architecture />
+          </Stop>
+          <Stop n="04" topic="Algorithms">
+            <Algorithms />
+          </Stop>
+          <Stop n="05" topic="How to draw a map">
+            <DrawingAMap />
+          </Stop>
+          <Stop n="06" topic="AI assistant">
+            <AISection />
+          </Stop>
+        </Rail>
         <FinalCTA />
         <Footer />
       </article>
     </AppShell>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Rail — a route-themed vertical thread that connects every section, with   */
+/*  the same halo + brand-line idiom we draw on the actual map. Hidden below  */
+/*  md to keep it from crowding small screens.                                */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+function Rail({ children }: { children: React.ReactNode }) {
+  return (
+    <section
+      aria-label="The journey"
+      className="relative mt-20 flex flex-col gap-24 md:mt-28 md:pl-20"
+    >
+      {/* Halo (white/dark stroke) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute hidden md:block"
+        style={{
+          left: "calc(2rem - 5px)",
+          top: 0,
+          bottom: 0,
+          width: "10px",
+          background: "var(--route-halo)",
+          opacity: 0.55,
+          borderRadius: "999px",
+        }}
+      />
+      {/* Brand line on top */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute hidden md:block"
+        style={{
+          left: "calc(2rem - 1.5px)",
+          top: 0,
+          bottom: 0,
+          width: "3px",
+          background:
+            "linear-gradient(to bottom, var(--brand) 0%, var(--brand) 92%, transparent 100%)",
+          borderRadius: "999px",
+        }}
+      />
+      {/* Pillars float at the very top of the rail. */}
+      <Pillars />
+      {children}
+    </section>
+  );
+}
+
+function Stop({
+  n,
+  topic,
+  children,
+}: {
+  n: string;
+  topic: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative">
+      {/* Marker — drawn as a route endpoint (halo + filled brand circle), with
+          the section number inside. Aligned to the Rail's vertical line. */}
+      <div
+        aria-hidden
+        className="absolute hidden md:flex"
+        style={{
+          left: "calc(2rem - 22px)",
+          top: "0.25rem",
+          width: "44px",
+          height: "44px",
+          borderRadius: "999px",
+          background: "var(--route-halo)",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
+        <div
+          style={{
+            width: "32px",
+            height: "32px",
+            borderRadius: "999px",
+            background: "var(--brand)",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "var(--font-sans)",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+          }}
+        >
+          {n}
+        </div>
+      </div>
+      {/* Mobile-only mini chip so the section numbers stay legible without the rail. */}
+      <span
+        aria-hidden
+        className="mb-3 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--background)] px-2.5 py-1 text-overline md:hidden"
+      >
+        <span
+          className="h-1.5 w-1.5 rounded-full"
+          style={{ background: "var(--brand)" }}
+        />
+        {n} · {topic}
+      </span>
+      {children}
+    </div>
   );
 }
 
@@ -47,42 +170,170 @@ export default function Home() {
 
 function Hero() {
   return (
-    <section className="flex flex-col items-start gap-7">
-      <BrandBadge />
-      <h1 className="text-display max-w-[18ch] sm:text-[3.75rem] sm:leading-[1.05]">
-        Indoor accessibility, drawn from data.
-      </h1>
-      <p className="text-lead max-w-[60ch]">
-        AccessMap is a teaching project that explains, end to end, how a modern
-        accessibility map is built — from the JSON that describes a floor, to
-        the graph algorithms that route a wheelchair around a flight of stairs,
-        to the AI assistant that answers <em>&ldquo;how do I get to room 404?&rdquo;</em>
-        — using the same primitives you can read in the source.
-      </p>
-      <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href="/maps/demo-building/ground"
-          className="group inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-body font-medium text-white shadow-[var(--shadow-card)] transition-[background,transform] hover:bg-[var(--brand-strong)] active:translate-y-px"
-        >
-          Open the live demo
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-        <Link
-          href="https://github.com/University-of-Macedonia-Research-Lab/accessmap"
-          className="group inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background)] px-5 py-3 text-body font-medium text-[color:var(--foreground)] hover:bg-[var(--surface-2)]"
-        >
-          View on GitHub
-          <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </Link>
-      </div>
+    <section className="relative">
+      {/* Soft brand-tinted glow behind the hero — sits beneath the article
+          padding so the rest of the page reads on its neutral surface. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-[420px] w-[120%] -translate-x-1/2 opacity-70"
+        style={{
+          background:
+            "radial-gradient(60% 50% at 50% 30%, var(--brand-soft), transparent 70%)",
+        }}
+      />
 
-      <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-caption">
-        <Stat label="WCAG 2.2" value="AA" />
-        <Stat label="Pathfinding" value="A* + Dijkstra" />
-        <Stat label="Profiles" value="3 (default · wheelchair · low-vision)" />
-        <Stat label="AI" value="Claude tool-use" />
+      <div className="grid items-center gap-12 md:grid-cols-[1.15fr_1fr]">
+        <div className="flex flex-col items-start gap-7">
+          <BrandBadge />
+          <h1 className="text-display max-w-[18ch] sm:text-[3.75rem] sm:leading-[1.05]">
+            Indoor accessibility, drawn from data.
+          </h1>
+          <p className="text-lead max-w-[60ch]">
+            AccessMap is a teaching project that explains, end to end, how a
+            modern accessibility map is built — from the JSON that describes a
+            floor, to the graph algorithms that route a wheelchair around a
+            flight of stairs, to the AI assistant that answers{" "}
+            <em>&ldquo;how do I get to room 404?&rdquo;</em> — using the same
+            primitives you can read in the source.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/maps/demo-building/ground"
+              className="group inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-body font-medium text-white shadow-[var(--shadow-card)] transition-[background,transform] hover:bg-[var(--brand-strong)] active:translate-y-px"
+            >
+              Open the live demo
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <Link
+              href="https://github.com/University-of-Macedonia-Research-Lab/accessmap"
+              className="group inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background)] px-5 py-3 text-body font-medium text-[color:var(--foreground)] hover:bg-[var(--surface-2)]"
+            >
+              View on GitHub
+              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
+          </div>
+
+          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-caption">
+            <Stat label="WCAG 2.2" value="AA" />
+            <Stat label="Pathfinding" value="A* + Dijkstra" />
+            <Stat label="Profiles" value="3 (default · wheelchair · low-vision)" />
+            <Stat label="AI" value="Claude tool-use" />
+          </div>
+        </div>
+
+        <HeroVisual />
       </div>
     </section>
+  );
+}
+
+function HeroVisual() {
+  // A stylised mini floor: outline, two rooms above a corridor, an elevator,
+  // a stairwell, and the same route halo + brand stroke we draw on the
+  // actual map. Themed via CSS vars so it tracks light/dark.
+  return (
+    <div
+      className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--background)] p-3 shadow-[var(--shadow-card)]"
+      role="img"
+      aria-label="Animated mini floor plan with a wheelchair-accessible route from the entrance to a classroom via the elevator"
+    >
+      {/* Decorative grid */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "linear-gradient(var(--foreground) 1px, transparent 1px), linear-gradient(90deg, var(--foreground) 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
+      />
+      <svg viewBox="0 0 320 220" className="block h-auto w-full">
+        {/* Floor base + exterior walls */}
+        <rect
+          x="14" y="14" width="292" height="192"
+          fill="var(--floor-base)"
+          stroke="var(--wall-exterior)"
+          strokeWidth="3.5"
+          rx="10"
+        />
+        {/* Rooms */}
+        <rect x="26" y="26" width="120" height="74" fill="oklch(0.94 0.025 250)" stroke="oklch(0.7 0.02 270)" strokeWidth="0.6" rx="4" />
+        <rect x="158" y="26" width="136" height="74" fill="oklch(0.93 0.04 80)" stroke="oklch(0.7 0.02 270)" strokeWidth="0.6" rx="4" />
+        <rect x="26" y="120" width="86" height="86" fill="oklch(0.94 0.025 295)" stroke="oklch(0.7 0.02 270)" strokeWidth="0.6" rx="4" />
+        <rect x="124" y="120" width="56" height="86" fill="oklch(0.93 0.06 65)" stroke="oklch(0.7 0.02 270)" strokeWidth="0.6" rx="4" />
+        <rect x="192" y="120" width="56" height="86" fill="oklch(0.92 0.04 30)" stroke="oklch(0.7 0.02 270)" strokeWidth="0.6" rx="4" />
+        <rect x="260" y="120" width="34" height="86" fill="oklch(0.93 0.05 150)" stroke="oklch(0.7 0.02 270)" strokeWidth="0.6" rx="4" />
+        {/* Corridor */}
+        <rect x="26" y="100" width="268" height="20" fill="oklch(0.96 0.005 95)" stroke="oklch(0.7 0.02 270)" strokeWidth="0.4" />
+        {/* Windows on the north wall */}
+        {[44, 84, 178, 224, 270].map((x, i) => (
+          <line
+            key={i}
+            x1={x} y1="14" x2={x + 24} y2="14"
+            stroke="var(--window-glass)"
+            strokeWidth="3"
+          />
+        ))}
+        {/* Labels */}
+        <text x="86" y="65" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="11" fontWeight="500" fill="oklch(0.3 0.02 270)">101</text>
+        <text x="226" y="65" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="11" fontWeight="500" fill="oklch(0.3 0.02 270)">Lab</text>
+        <text x="69" y="167" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="10" fontWeight="500" fill="oklch(0.3 0.02 270)">Office</text>
+        <text x="277" y="167" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="10" fontWeight="500" fill="oklch(0.3 0.02 270)">In</text>
+        {/* Feature icons */}
+        <g>
+          <circle cx="152" cy="160" r="11" fill="var(--feature)" />
+          <text x="152" y="164" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="11" fontWeight="700" fill="white">E</text>
+        </g>
+        <g>
+          <circle cx="220" cy="160" r="11" fill="var(--feature)" />
+          <text x="220" y="164" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="11" fontWeight="700" fill="white">S</text>
+        </g>
+        {/* Stairs edge — dashed red */}
+        <line x1="220" y1="110" x2="220" y2="148" stroke="oklch(0.6 0.21 27 / 0.6)" strokeWidth="1.4" strokeDasharray="3 2" />
+        {/* Route: entrance → corridor → elevator → into classroom 101 */}
+        <g>
+          <polyline
+            points="277,160 277,110 152,110 152,148 86,148 86,63"
+            fill="none"
+            stroke="var(--route-halo)"
+            strokeWidth="9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <polyline
+            points="277,160 277,110 152,110 152,148 86,148 86,63"
+            fill="none"
+            stroke="var(--route)"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Endpoints */}
+          <circle cx="277" cy="160" r="6" fill="var(--route-halo)" />
+          <circle cx="277" cy="160" r="3.5" fill="var(--route)" />
+          <circle cx="86" cy="63" r="6" fill="var(--route-halo)" />
+          <circle cx="86" cy="63" r="3.5" fill="var(--route)" />
+        </g>
+      </svg>
+      {/* Caption strip mimicking a real-app overlay */}
+      <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background)]/85 p-2.5 backdrop-blur-sm">
+        <span
+          className="grid h-7 w-7 place-items-center rounded-lg text-white"
+          style={{ background: "var(--brand)" }}
+        >
+          <Accessibility className="h-3.5 w-3.5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-caption text-[color:var(--foreground)]">
+            <span className="font-semibold">Wheelchair</span> route · entrance
+            → elevator → 101
+          </p>
+          <p className="truncate text-[11px] text-[color:var(--muted-foreground)]">
+            Stairs blocked · 5 segments · cost 14.6
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -700,9 +951,48 @@ function AISection() {
 function FinalCTA() {
   return (
     <section
-      className="flex flex-col items-start gap-5 rounded-3xl border border-[var(--border)] p-8 shadow-[var(--shadow-card)] sm:p-12"
+      className="relative mt-24 flex flex-col items-start gap-5 rounded-3xl border border-[var(--border)] p-8 shadow-[var(--shadow-card)] sm:p-12"
       style={{ background: "var(--brand-soft)" }}
     >
+      {/* Tail of the rail descends into this CTA, ending in a route endpoint
+          to visually close the journey. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-24 hidden md:block"
+        style={{ left: "calc(50% - 1.5px)", width: "3px", height: "96px" }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(to bottom, transparent 0%, var(--brand) 30%, var(--brand) 100%)",
+            borderRadius: "999px",
+          }}
+        />
+      </div>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-3 hidden md:block"
+        style={{
+          left: "calc(50% - 9px)",
+          width: "18px",
+          height: "18px",
+          borderRadius: "999px",
+          background: "var(--route-halo)",
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: "4px",
+            borderRadius: "999px",
+            background: "var(--brand)",
+          }}
+        />
+      </div>
+
       <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand)] text-white">
         <Accessibility className="h-5 w-5" />
       </span>
@@ -740,7 +1030,7 @@ function FinalCTA() {
 
 function Footer() {
   return (
-    <footer className="flex flex-col gap-3 border-t border-[var(--border)] pt-8 text-caption">
+    <footer className="mt-16 flex flex-col gap-3 border-t border-[var(--border)] pt-8 text-caption">
       <p className="text-body text-[color:var(--muted-foreground)]">
         AccessMap is a sibling of <em>accessguide</em> — the campus
         accessibility map for the University of Macedonia — built as
