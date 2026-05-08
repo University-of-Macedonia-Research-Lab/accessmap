@@ -134,7 +134,7 @@ export function AssistantPanel({ building, floor, onRoute }: Props) {
         <button
           type="submit"
           disabled={busy || !input.trim()}
-          className="rounded-md bg-[var(--brand)] px-3 py-1.5 text-caption font-medium text-[color:var(--brand-foreground)] disabled:opacity-50"
+          className="rounded-md bg-[var(--brand)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--brand-strong)] disabled:opacity-50"
         >
           Send
         </button>

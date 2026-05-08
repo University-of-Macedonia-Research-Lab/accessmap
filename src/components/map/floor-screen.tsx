@@ -144,9 +144,9 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
                 type="button"
                 onClick={() => setProfileId(p.id)}
                 className={
-                  "rounded-md border px-2.5 py-1.5 text-caption font-medium transition-colors " +
+                  "rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors " +
                   (p.id === profileId
-                    ? "border-[var(--brand)] bg-[var(--brand)] text-[color:var(--brand-foreground)]"
+                    ? "border-[var(--brand)] bg-[var(--brand)] text-white"
                     : "border-[var(--border)] bg-[var(--background)] text-[color:var(--foreground)] hover:bg-[var(--surface-2)]")
                 }
               >
@@ -240,13 +240,18 @@ function FloorSwitcher({
               key={f.floorSlug}
               href={`/maps/${buildingSlug}/${f.floorSlug}`}
               className={
-                "flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-caption font-medium transition-colors " +
+                "flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors " +
                 (active
-                  ? "border-[var(--foreground)] bg-[var(--foreground)] text-[color:var(--background)]"
+                  ? "border-[var(--brand)] bg-[var(--brand)] text-white"
                   : "border-[var(--border)] bg-[var(--background)] text-[color:var(--foreground)] hover:bg-[var(--surface-2)]")
               }
             >
-              <span className="font-mono text-[0.75rem] tabular-nums opacity-70">
+              <span
+                className={
+                  "font-mono text-[0.75rem] tabular-nums " +
+                  (active ? "text-white/80" : "text-[color:var(--muted-foreground)]")
+                }
+              >
                 L{f.level}
               </span>
               <span>{f.name.en}</span>
