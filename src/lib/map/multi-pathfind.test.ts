@@ -52,7 +52,7 @@ describe("findMultiFloorPath", () => {
       PROFILES.default,
     );
     expect(r).not.toBeNull();
-    // Either elevator or stairs is fine — but it must traverse one.
+    // Either elevator or stairs is fine, but it must traverse one.
     const all = r!.segments.flatMap((s) => s.nodes);
     expect(all.some((n) => n === "n-elev" || n === "n-stair")).toBe(true);
   });

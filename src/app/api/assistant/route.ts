@@ -4,7 +4,7 @@ import { loadBuilding } from "@/lib/map/loader";
 
 const RequestSchema = z.object({
   building: z.string().min(1),
-  /** The floor the user is currently viewing — used to disambiguate "here". */
+  /** The floor the user is currently viewing, used to disambiguate "here". */
   floor: z.string().min(1),
   message: z.string().min(1).max(2000),
   history: z
@@ -16,6 +16,7 @@ const RequestSchema = z.object({
     )
     .max(20)
     .default([]),
+  lang: z.enum(["en", "el"]).default("en"),
 });
 
 export async function POST(request: Request) {
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
       parsed.data.floor,
       parsed.data.history as AssistantMessage[],
       parsed.data.message,
+      parsed.data.lang,
     );
     return Response.json(result);
   } catch (err) {

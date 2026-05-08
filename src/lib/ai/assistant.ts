@@ -38,7 +38,7 @@ export type AssistantResponse = {
 
 const SYSTEM_INTRO =
   "You are AccessMap's wayfinding assistant. You help students navigate an indoor accessibility map " +
-  "of a multi-floor building. Always call `find_route` to compute a path before describing one — never " +
+  "of a multi-floor building. Always call `find_route` to compute a path before describing one, never " +
   "invent room ids, node ids, or routes. Use `find_room` first when the user names a destination by " +
   "code or partial name. Always pass both `floor` and `room_id` when calling `find_route`. " +
   "If the user mentions a wheelchair, mobility issue, or stairs they want to avoid, pass " +
@@ -59,7 +59,7 @@ function makeTools(
       query: z
         .string()
         .min(1)
-        .describe("Free-text search — a room code, partial name, or kind (e.g. 'lab')."),
+        .describe("Free-text search, a room code, partial name, or kind (e.g. 'lab')."),
     }),
     run: async ({ query }) => {
       const q = query.toLowerCase();
@@ -155,8 +155,13 @@ function makeTools(
 function buildSystem(
   floors: FloorMap[],
   currentFloorSlug: string,
+  lang: "en" | "el",
 ): Anthropic.Beta.BetaTextBlockParam[] {
-  // The building JSON is the bulky, stable part of the prefix — cache it.
+  // The building JSON is the bulky, stable part of the prefix; cache it.
+  const langInstruction =
+    lang === "el"
+      ? "Reply to the user in Greek. Use Greek room names and natural Greek phrasing."
+      : "Reply to the user in English.";
   return [
     { type: "text", text: SYSTEM_INTRO },
     {
@@ -169,7 +174,9 @@ function buildSystem(
     },
     {
       type: "text",
-      text: `The user is currently looking at floor "${currentFloorSlug}". When they say "here" or "this floor" without naming one, assume that.`,
+      text:
+        `The user is currently looking at floor "${currentFloorSlug}". When they say "here" or "this floor" without naming one, assume that. ` +
+        langInstruction,
     },
   ];
 }
@@ -179,10 +186,11 @@ export async function askAssistant(
   currentFloorSlug: string,
   history: AssistantMessage[],
   userMessage: string,
+  lang: "en" | "el" = "en",
 ): Promise<AssistantResponse> {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error(
-      "ANTHROPIC_API_KEY is not set — add it to .env.local to enable the assistant.",
+      "ANTHROPIC_API_KEY is not set; add it to .env.local to enable the assistant.",
     );
   }
 
@@ -198,7 +206,7 @@ export async function askAssistant(
   const finalMessage = await client.beta.messages.toolRunner({
     model: "claude-opus-4-7",
     max_tokens: 4096,
-    system: buildSystem(floors, currentFloorSlug),
+    system: buildSystem(floors, currentFloorSlug, lang),
     tools,
     messages,
     thinking: { type: "adaptive" },

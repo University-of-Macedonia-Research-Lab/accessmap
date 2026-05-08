@@ -1,7 +1,7 @@
 /**
  * Filesystem-backed loaders for floor JSON. The geometry intentionally lives
  * in JSON files (not Prisma) so a contributor can add a floor by dropping a
- * file into `src/data/maps/<building>/<floor>.json` — no migration needed.
+ * file into `src/data/maps/<building>/<floor>.json`, no migration needed.
  */
 import { promises as fs } from "node:fs";
 import path from "node:path";

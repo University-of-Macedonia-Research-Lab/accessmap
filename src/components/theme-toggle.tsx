@@ -10,7 +10,7 @@ export function ThemeToggle() {
   useEffect(() => setMounted(true), []);
 
   // Render a stable placeholder until mount so the server HTML and client
-  // first paint match — `resolvedTheme` is only known on the client.
+  // first paint match, `resolvedTheme` is only known on the client.
   const isDark = mounted && resolvedTheme === "dark";
 
   return (

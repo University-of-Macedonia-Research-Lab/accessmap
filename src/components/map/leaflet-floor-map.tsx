@@ -5,7 +5,7 @@
  *
  * Why Leaflet for an indoor map: we want the *interaction* of a map (smooth
  * pan, pinch-zoom, double-tap, attribution slot, mobile gestures) without
- * caring about geography. Leaflet's `CRS.Simple` is exactly that — a flat
+ * caring about geography. Leaflet's `CRS.Simple` is exactly that, a flat
  * Cartesian plane where 1 unit = 1 unit at zoom 0. We hand it the bounds of
  * our floor JSON and place our existing programmatic SVG inside an
  * `SVGOverlay`, which keeps room hover/click handlers working unchanged.
@@ -40,7 +40,7 @@ export function LeafletFloorMap({
   const h = maxY - minY;
   const longest = Math.max(w, h);
 
-  // [lat, lng] = [y, x] — CRS.Simple is non-geographic, so we just use the
+  // [lat, lng] = [y, x], CRS.Simple is non-geographic, so we just use the
   // floor's native coordinate frame.
   const bounds = useMemo<L.LatLngBoundsExpression>(
     () => [

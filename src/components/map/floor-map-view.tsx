@@ -16,7 +16,7 @@ type Props = {
   map: FloorMap;
   /** Show the routing graph overlay (nodes + edges). Useful while teaching. */
   showGraph?: boolean;
-  /** Highlight an ordered list of node ids — used to draw a computed route. */
+  /** Highlight an ordered list of node ids, used to draw a computed route. */
   highlightedRoute?: string[];
   /** Language for labels. */
   lang?: "en" | "el";
@@ -112,7 +112,7 @@ export function FloorMapInner({
 
   return (
     <>
-      {/* Floor base — the building's interior fill. */}
+      {/* Floor base, the building's interior fill. */}
       {map.outline && (
         <path
           d={polygonToPathD(map.outline)}
@@ -136,14 +136,14 @@ export function FloorMapInner({
         ))}
       </g>
 
-      {/* Interior partitions — drawn over rooms but under the exterior shell. */}
+      {/* Interior partitions, drawn over rooms but under the exterior shell. */}
       <g>
         {interiorWalls.map((w) => (
           <Wall key={w.id} wall={w} thickness={W_INTERIOR} kind="interior" />
         ))}
       </g>
 
-      {/* Exterior shell — outline polygon (if any) + explicit exterior walls. */}
+      {/* Exterior shell, outline polygon (if any) + explicit exterior walls. */}
       {map.outline && (
         <path
           d={polygonToPathD(map.outline)}
@@ -159,7 +159,7 @@ export function FloorMapInner({
         ))}
       </g>
 
-      {/* Windows — drawn over the exterior shell as cyan glass cuts. */}
+      {/* Windows, drawn over the exterior shell as cyan glass cuts. */}
       <g>
         {windows.map((w) => (
           <Window key={w.id} wall={w} thickness={W_WINDOW} />
@@ -228,7 +228,7 @@ export function FloorMapInner({
         </g>
       )}
 
-      {/* Highlighted route — drawn as a white halo + colored stroke on top so
+      {/* Highlighted route, drawn as a white halo + colored stroke on top so
           it's visible against any surface (the Google/Apple Maps idiom). */}
       {routeSegments.length > 0 && (
         <>

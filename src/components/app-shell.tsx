@@ -3,7 +3,7 @@
 /**
  * App layout shell: a slim header, an optional left sidebar (off-canvas drawer
  * below `lg`), and a main content area that fills the rest of the viewport.
- * Pages compose the shell by passing `header`, `sidebar`, and `children` —
+ * Pages compose the shell by passing `header`, `sidebar`, and `children` , 
  * keeping the chrome (logo, nav, menu button) consistent across routes.
  */
 import { useState, type ReactNode } from "react";
@@ -17,11 +17,13 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageToggle } from "@/components/language-toggle";
+import { useLang } from "@/lib/i18n";
 
 type Props = {
   /** Slot rendered to the right of the brand in the header (e.g. floor name). */
   headerSlot?: ReactNode;
-  /** Sidebar contents — also rendered inside the mobile drawer. Omit to hide. */
+  /** Sidebar contents, also rendered inside the mobile drawer. Omit to hide. */
   sidebar?: ReactNode;
   /** Title shown at the top of the mobile drawer when open. */
   sidebarTitle?: string;
@@ -31,10 +33,15 @@ type Props = {
 export function AppShell({
   headerSlot,
   sidebar,
-  sidebarTitle = "Tools",
+  sidebarTitle,
   children,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const { lang } = useLang();
+  const t = lang === "el"
+    ? { tools: "Εργαλεία", openSidebar: "Άνοιγμα πλαϊνού πίνακα", sidebar: "Πλαϊνό", home: "Αρχική σελίδα", maps: "Χάρτες", about: "Σχετικά" }
+    : { tools: "Tools", openSidebar: "Open sidebar", sidebar: "Sidebar", home: "AccessMap home", maps: "Maps", about: "About" };
+  const resolvedSidebarTitle = sidebarTitle ?? t.tools;
 
   return (
     <div className="flex h-dvh flex-col bg-[var(--surface-1)]">
@@ -48,7 +55,7 @@ export function AppShell({
         {sidebar && (
           <aside
             className="hidden w-80 shrink-0 overflow-y-auto border-r border-[var(--border)] bg-[var(--surface-1)] lg:block"
-            aria-label="Sidebar"
+            aria-label={t.sidebar}
           >
             <div className="flex flex-col gap-4 p-4">{sidebar}</div>
           </aside>
@@ -63,9 +70,9 @@ export function AppShell({
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetContent side="left" className="w-[88vw] max-w-sm p-0">
             <div className="flex flex-col gap-1 px-4 pt-4">
-              <SheetTitle className="text-h3">{sidebarTitle}</SheetTitle>
+              <SheetTitle className="text-h3">{resolvedSidebarTitle}</SheetTitle>
               <SheetDescription className="sr-only">
-                Map controls and assistant
+                {lang === "el" ? "Έλεγχοι χάρτη και βοηθός" : "Map controls and assistant"}
               </SheetDescription>
             </div>
             <div className="flex flex-col gap-4 overflow-y-auto p-4">
@@ -87,6 +94,10 @@ function Header({
   showMenu: boolean;
   slot?: ReactNode;
 }) {
+  const { lang } = useLang();
+  const t = lang === "el"
+    ? { openSidebar: "Άνοιγμα πλαϊνού πίνακα", home: "Αρχική σελίδα", maps: "Χάρτες", about: "Σχετικά" }
+    : { openSidebar: "Open sidebar", home: "AccessMap home", maps: "Maps", about: "About" };
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b border-[var(--border)] bg-[var(--background)] px-5 sm:gap-6 sm:px-8 lg:px-10">
       {showMenu && (
@@ -94,7 +105,7 @@ function Header({
           type="button"
           onClick={onMenuClick}
           className="grid h-9 w-9 place-items-center rounded-md border border-transparent text-[color:var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[color:var(--foreground)] lg:hidden"
-          aria-label="Open sidebar"
+          aria-label={t.openSidebar}
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -103,7 +114,7 @@ function Header({
       <Link
         href="/"
         className="flex shrink-0 items-center text-[color:var(--foreground)]"
-        aria-label="AccessMap home"
+        aria-label={t.home}
       >
         {/* Two-asset wordmark: dark text on light theme, light text on
             dark theme. Both have the same shape, so we just toggle which
@@ -130,8 +141,9 @@ function Header({
       <div className="ml-2 hidden text-caption sm:block">{slot}</div>
 
       <nav className="ml-auto flex items-center gap-1 text-body">
-        <NavLink href="/">Maps</NavLink>
-        <NavLink href="/about">About</NavLink>
+        <NavLink href="/">{t.maps}</NavLink>
+        <NavLink href="/about">{t.about}</NavLink>
+        <LanguageToggle />
         <ThemeToggle />
       </nav>
     </header>

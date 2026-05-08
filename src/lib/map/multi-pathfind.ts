@@ -4,11 +4,11 @@
  * Builds a single graph from every floor of a building, where each node id
  * is namespaced as `${floorSlug}:${nodeId}`. A node's `connectsToFloor`
  * field becomes a cross-floor edge whose features are inherited from the
- * source node — so a `stairs` transition is blocked for the wheelchair
+ * source node, so a `stairs` transition is blocked for the wheelchair
  * profile exactly the same way an in-floor `stairs` edge would be.
  *
  * Heuristic is 0 (Dijkstra) since A*'s euclidean heuristic doesn't
- * generalise across floors. Floor-plan-sized graphs are tiny — Dijkstra
+ * generalise across floors. Floor-plan-sized graphs are tiny, Dijkstra
  * is plenty fast and the implementation stays single-page.
  */
 import type { AccessibilityFeature, FloorMap, GraphNode } from "./schema";
@@ -19,7 +19,7 @@ export type MultiFloorRef = { floor: string; node: string };
 export type MultiFloorPath = {
   /** Total cost summed across all per-floor segments and cross-floor hops. */
   cost: number;
-  /** Path grouped by floor — consecutive same-floor nodes form a segment.
+  /** Path grouped by floor, consecutive same-floor nodes form a segment.
    *  Adjacent segments mean a cross-floor transition between them. */
   segments: Array<{ floorSlug: string; nodes: string[] }>;
 };
@@ -90,7 +90,7 @@ function buildUnifiedAdjacency(floors: FloorMap[], profile: Profile): Adj {
     // Cross-floor edges. We add a directed edge from each side that declares
     // a `connectsToFloor`; if both sides declare it (the typical case),
     // that's bidirectional. If only one side declares it, traversal is
-    // one-way — which is occasionally what you want (e.g. a fire exit).
+    // one-way, which is occasionally what you want (e.g. a fire exit).
     for (const n of floor.nodes) {
       if (!n.connectsToFloor) continue;
       const fromK = key(floor.floorSlug, n.id);

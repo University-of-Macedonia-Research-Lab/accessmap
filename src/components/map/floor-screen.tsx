@@ -2,8 +2,8 @@
 
 /**
  * The full floor experience: app shell with a sidebar of controls (floor
- * switcher + route picker + AI assistant) and a Leaflet map filling the
- * main area. Owns the shared state so the manual route picker and the
+ * switcher + route picker + assistant) and a Leaflet map filling the main
+ * area. Owns the shared state so the manual route picker and the
  * assistant can both feed the same `highlightedRoute` prop on the map.
  */
 import { useMemo, useState } from "react";
@@ -18,6 +18,7 @@ import {
   type MultiFloorPath,
 } from "@/lib/map/multi-pathfind";
 import type { FloorMap as FloorMapData } from "@/lib/map/schema";
+import { useLang, type Lang } from "@/lib/i18n";
 
 const PROFILE_LIST = Object.values(PROFILES);
 
@@ -29,7 +30,37 @@ type Props = {
 
 type RoomRef = { floor: string; room: string };
 
+function profileLabel(p: Profile, lang: Lang): string {
+  return lang === "el" ? p.labelEl : p.label;
+}
+
 export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
+  const { lang } = useLang();
+  const isEl = lang === "el";
+  const t = isEl
+    ? {
+        plan: "Σχεδιασμός διαδρομής",
+        from: "Από",
+        to: "Προς",
+        profile: "Προφίλ",
+        display: "Εμφάνιση",
+        showGraph: "Εμφάνιση γραφήματος δρομολόγησης",
+        floor: "Όροφος",
+        howWorks: "Πώς λειτουργεί;",
+        controls: "Έλεγχοι χάρτη",
+      }
+    : {
+        plan: "Plan a route",
+        from: "From",
+        to: "To",
+        profile: "Profile",
+        display: "Display",
+        showGraph: "Show routing graph",
+        floor: "Floor",
+        howWorks: "How does this work?",
+        controls: "Map controls",
+      };
+
   const currentFloor =
     floors.find((f) => f.floorSlug === currentFloorSlug) ?? floors[0];
 
@@ -42,11 +73,13 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
             value: `${f.floorSlug}|${r.id}`,
             floor: f.floorSlug,
             room: r.id,
-            label: r.code ? `${r.code} — ${r.name.en}` : r.name.en,
-            floorName: f.name.en,
+            label: r.code
+              ? `${r.code} · ${r.name[lang]}`
+              : r.name[lang],
+            floorName: f.name[lang],
           })),
       ),
-    [floors],
+    [floors, lang],
   );
 
   const defaultFrom: RoomRef = useMemo(() => {
@@ -75,8 +108,8 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
   const [toRef, setToRefState] = useState<RoomRef>(defaultTo);
   const [profileId, setProfileIdState] = useState<string>("default");
   const [showGraph, setShowGraph] = useState(false);
-  // AI-suggested multi-floor route. When set, it overrides the manual route
-  // until the user touches the From/To/Profile form again.
+  // Assistant-suggested multi-floor route. Overrides the manual route until
+  // the user touches the From/To/Profile form again.
   const [aiPath, setAiPath] = useState<MultiFloorPath | null>(null);
 
   const setFromRef = (v: RoomRef) => {
@@ -116,27 +149,29 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
         buildingSlug={buildingSlug}
         floors={floors}
         currentFloorSlug={currentFloorSlug}
+        floorLabel={t.floor}
+        lang={lang}
       />
 
       <Divider />
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-overline">Plan a route</h2>
-        <Field label="From">
+        <h2 className="text-overline">{t.plan}</h2>
+        <Field label={t.from}>
           <RoomSelect
             value={fromRef}
             options={allRoomOptions}
             onChange={setFromRef}
           />
         </Field>
-        <Field label="To">
+        <Field label={t.to}>
           <RoomSelect
             value={toRef}
             options={allRoomOptions}
             onChange={setToRef}
           />
         </Field>
-        <Field label="Profile">
+        <Field label={t.profile}>
           <div className="flex flex-wrap gap-1.5">
             {PROFILE_LIST.map((p) => (
               <button
@@ -150,7 +185,7 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
                     : "border-[var(--border)] bg-[var(--background)] text-[color:var(--foreground)] hover:bg-[var(--surface-2)]")
                 }
               >
-                {p.label}
+                {profileLabel(p, lang)}
               </button>
             ))}
           </div>
@@ -165,13 +200,14 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
           buildingSlug={buildingSlug}
           currentFloorSlug={currentFloorSlug}
           floors={floors}
+          lang={lang}
         />
       </section>
 
       <Divider />
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-overline">Display</h2>
+        <h2 className="text-overline">{t.display}</h2>
         <label className="flex cursor-pointer items-center gap-2 text-body">
           <input
             type="checkbox"
@@ -179,7 +215,7 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
             onChange={(e) => setShowGraph(e.target.checked)}
             className="h-4 w-4 accent-[var(--brand)]"
           />
-          Show routing graph
+          {t.showGraph}
         </label>
       </section>
 
@@ -195,7 +231,7 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
 
       <section className="flex flex-col gap-2 text-caption">
         <Link href="/about" className="text-[color:var(--brand)] hover:underline">
-          How does this work? →
+          {t.howWorks} →
         </Link>
       </section>
     </div>
@@ -205,16 +241,17 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
     <AppShell
       headerSlot={
         <span className="text-[color:var(--muted-foreground)]">
-          {prettyBuildingName(buildingSlug)} · {currentFloor.name.en}
+          {prettyBuildingName(buildingSlug)} · {currentFloor.name[lang]}
         </span>
       }
       sidebar={sidebar}
-      sidebarTitle="Map controls"
+      sidebarTitle={t.controls}
     >
       <FloorMap
         map={currentFloor}
         showGraph={showGraph}
         highlightedRoute={currentSegmentNodes}
+        lang={lang}
       />
     </AppShell>
   );
@@ -224,14 +261,18 @@ function FloorSwitcher({
   buildingSlug,
   floors,
   currentFloorSlug,
+  floorLabel,
+  lang,
 }: {
   buildingSlug: string;
   floors: FloorMapData[];
   currentFloorSlug: string;
+  floorLabel: string;
+  lang: Lang;
 }) {
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="text-overline">Floor</h2>
+      <h2 className="text-overline">{floorLabel}</h2>
       <div className="flex flex-wrap gap-1.5">
         {floors.map((f) => {
           const active = f.floorSlug === currentFloorSlug;
@@ -254,7 +295,7 @@ function FloorSwitcher({
               >
                 L{f.level}
               </span>
-              <span>{f.name.en}</span>
+              <span>{f.name[lang]}</span>
             </Link>
           );
         })}
@@ -272,6 +313,7 @@ function RouteSummary({
   buildingSlug,
   currentFloorSlug,
   floors,
+  lang,
 }: {
   activePath: MultiFloorPath | null;
   aiAuthored: boolean;
@@ -281,7 +323,35 @@ function RouteSummary({
   buildingSlug: string;
   currentFloorSlug: string;
   floors: FloorMapData[];
+  lang: Lang;
 }) {
+  const isEl = lang === "el";
+  const tx = isEl
+    ? {
+        pickDifferent: "Επιλέξτε δύο διαφορετικά δωμάτια.",
+        noRouteFor: (label: string) =>
+          `Καμία διαδρομή για το προφίλ «${label.toLowerCase()}».`,
+        assistantRoute: "Διαδρομή βοηθού",
+        route: "Διαδρομή",
+        segments: "τμήματα",
+        cost: "κόστος",
+        profileSuffix: "προφίλ",
+        notOnFloor: "Αυτή η διαδρομή δεν περνά από αυτόν τον όροφο.",
+        continueOn: (name: string) => `Συνέχεια στον όροφο: ${name}`,
+      }
+    : {
+        pickDifferent: "Pick two different rooms.",
+        noRouteFor: (label: string) =>
+          `No route for the ${label.toLowerCase()} profile.`,
+        assistantRoute: "Assistant route",
+        route: "Route",
+        segments: "segments",
+        cost: "cost",
+        profileSuffix: "profile",
+        notOnFloor: "This route doesn't pass through this floor.",
+        continueOn: (name: string) => `Continue on ${name}`,
+      };
+
   const base =
     "rounded-md border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-caption";
   if (!activePath) {
@@ -289,7 +359,7 @@ function RouteSummary({
       fromRef.floor === toRef.floor &&
       fromRef.room === toRef.room
     ) {
-      return <p className={base}>Pick two different rooms.</p>;
+      return <p className={base}>{tx.pickDifferent}</p>;
     }
     return (
       <p
@@ -297,7 +367,7 @@ function RouteSummary({
           base + " font-medium text-[color:color-mix(in_oklab,var(--warning),#000_15%)]"
         }
       >
-        No route for the {profile.label.toLowerCase()} profile.
+        {tx.noRouteFor(profileLabel(profile, lang))}
       </p>
     );
   }
@@ -320,14 +390,11 @@ function RouteSummary({
           (aiAuthored ? "text-[color:var(--brand)]" : "text-[color:var(--foreground)]")
         }
       >
-        {aiAuthored ? "Assistant route" : "Route"} · {totalSegments} segments ·
-        cost {activePath.cost.toFixed(1)}
+        {aiAuthored ? tx.assistantRoute : tx.route} · {totalSegments} {tx.segments} · {tx.cost} {activePath.cost.toFixed(1)}
       </p>
-      <p className="mt-0.5">{profile.label} profile</p>
+      <p className="mt-0.5">{profileLabel(profile, lang)} {tx.profileSuffix}</p>
       {!onCurrent && otherFloors.length > 0 && (
-        <p className="mt-1.5 text-[color:var(--foreground)]">
-          This route doesn&rsquo;t pass through this floor.
-        </p>
+        <p className="mt-1.5 text-[color:var(--foreground)]">{tx.notOnFloor}</p>
       )}
       {otherFloors.length > 0 && (
         <ul className="mt-2 flex flex-col gap-1">
@@ -348,7 +415,7 @@ function RouteSummary({
                   ) : (
                     <ArrowDown className="h-3.5 w-3.5" />
                   )}
-                  Continue on {f.name.en}
+                  {tx.continueOn(f.name[lang])}
                 </Link>
               </li>
             );
@@ -391,7 +458,6 @@ function RoomSelect({
   onChange: (v: RoomRef) => void;
   options: RoomOption[];
 }) {
-  // Group by floor.
   const byFloor = useMemo(() => {
     const m = new Map<string, { floorName: string; opts: RoomOption[] }>();
     for (const o of options) {

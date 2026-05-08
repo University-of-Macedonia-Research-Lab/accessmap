@@ -13,6 +13,8 @@ import type { AccessibilityFeature, FloorMap, GraphNode } from "./schema";
 export type Profile = {
   id: string;
   label: string;
+  /** Localised label for Greek UIs. */
+  labelEl: string;
   /** Multipliers per feature; missing features default to 1. Infinity blocks. */
   weights: Partial<Record<AccessibilityFeature, number>>;
 };
@@ -21,11 +23,13 @@ export const PROFILES: Record<string, Profile> = {
   default: {
     id: "default",
     label: "Default",
+    labelEl: "Προεπιλογή",
     weights: {},
   },
   wheelchair: {
     id: "wheelchair",
     label: "Wheelchair",
+    labelEl: "Αμαξίδιο",
     weights: {
       stairs: Infinity,
       step: Infinity,
@@ -37,6 +41,7 @@ export const PROFILES: Record<string, Profile> = {
   visually_impaired: {
     id: "visually_impaired",
     label: "Visually impaired",
+    labelEl: "Άτομο με προβλήματα όρασης",
     weights: {
       stairs: 1.5,
       narrow_passage: 1.5,
