@@ -121,7 +121,7 @@ function Hero() {
             </Link>
           </div>
 
-          <ul className="mt-1 grid w-full max-w-md grid-cols-2 gap-x-5 gap-y-2 text-caption">
+          <ul className="mt-1 grid w-full grid-cols-2 gap-x-6 gap-y-3 sm:max-w-2xl sm:grid-cols-4 sm:gap-x-4">
             <LearnItem label="A. Web a11y" body="WCAG 2.2 AA basics" />
             <LearnItem label="B. Map a11y" body="Per-profile routing" />
             <LearnItem label="C. Algorithms" body="A* + Dijkstra" />
@@ -137,14 +137,14 @@ function Hero() {
 
 function LearnItem({ label, body }: { label: string; body: string }) {
   return (
-    <li className="flex items-baseline gap-2">
+    <li className="flex flex-col gap-0.5 whitespace-nowrap">
       <span
-        className="font-mono text-[0.7rem] tracking-[0.05em]"
+        className="font-mono text-[0.7rem] font-semibold tracking-[0.06em]"
         style={{ color: "var(--brand)" }}
       >
         {label}
       </span>
-      <span className="text-[color:var(--muted-foreground)]">{body}</span>
+      <span className="text-caption text-[color:var(--foreground)]">{body}</span>
     </li>
   );
 }
@@ -485,7 +485,7 @@ function MapAccessibility({ n }: { n: string }) {
         </table>
       </div>
       <p className="text-body text-[color:var(--muted-foreground)]">
-        The numbers are knobs, not gospel — they're tuned for teaching. The
+        The numbers are knobs, not gospel — they&rsquo;re tuned for teaching. The
         principle is the load-bearing part: <em>same graph, different
         weights.</em> Adding a profile (deafblind, stroller, with-luggage) is
         a few lines in <code className="rounded bg-[var(--surface-2)] px-1 font-mono text-[0.85em]">PROFILES</code>{" "}
@@ -712,7 +712,7 @@ function Algorithms({ n }: { n: string }) {
           <h3 className="text-h3">A* in plain terms</h3>
           <ul className="flex flex-col gap-2 text-body">
             <Bullet>
-              <strong>Open set</strong> — nodes we've reached but not finished
+              <strong>Open set</strong> — nodes we&rsquo;ve reached but not finished
               expanding. We always pop the one with the smallest{" "}
               <Code>f = g + h</Code>.
             </Bullet>
@@ -1029,24 +1029,54 @@ function Section({
 
 function NumberedKicker({ n, topic }: { n: string; topic: string }) {
   return (
-    <p className="flex items-center gap-3">
-      <span
-        className="inline-flex items-baseline gap-1.5 rounded-full border border-[var(--border)] bg-[var(--background)] px-2.5 py-1"
-        aria-hidden
-      >
+    <div className="flex flex-col gap-3">
+      <div className="flex items-end gap-4 sm:gap-6">
+        {/* Tabular numerals + tight tracking so 01–06 read like an
+            architectural plate number. The dot is part of the design — it
+            anchors the big numeral to the baseline of the topic label. */}
         <span
-          className="font-mono text-[0.7rem] font-bold tracking-[0.06em]"
-          style={{ color: "var(--brand)" }}
+          aria-hidden
+          className="font-bold tabular-nums leading-[0.78] tracking-[-0.05em]"
+          style={{
+            color: "var(--brand)",
+            fontSize: "clamp(4.5rem, 11vw, 8rem)",
+          }}
         >
           {n}
+          <span
+            aria-hidden
+            className="inline-block align-baseline"
+            style={{
+              width: "0.18em",
+              height: "0.18em",
+              marginLeft: "0.04em",
+              marginBottom: "0.05em",
+              borderRadius: "999px",
+              background: "var(--brand)",
+            }}
+          />
         </span>
-        <span
-          className="h-1 w-1 rounded-full"
-          style={{ background: "var(--brand)" }}
-        />
-      </span>
-      <span className="text-overline text-[color:var(--brand)]">{topic}</span>
-    </p>
+
+        {/* Topic label sits to the right of the big numeral, anchored to the
+            number's baseline by a thin dotted leader and a horizontal accent
+            line — picking up the architectural-drawing vocabulary used in
+            SectionOrnament. */}
+        <span className="flex flex-1 flex-col gap-2 pb-2 sm:pb-3">
+          <span className="text-overline text-[color:var(--brand)]">
+            {topic}
+          </span>
+          <span
+            aria-hidden
+            className="h-px w-full"
+            style={{
+              background:
+                "linear-gradient(to right, var(--brand) 0%, var(--brand) 36%, transparent 100%)",
+              opacity: 0.5,
+            }}
+          />
+        </span>
+      </div>
+    </div>
   );
 }
 

@@ -88,7 +88,7 @@ function Header({
   slot?: ReactNode;
 }) {
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--background)] px-3 sm:px-5">
+    <header className="flex h-16 shrink-0 items-center gap-4 border-b border-[var(--border)] bg-[var(--background)] px-5 sm:gap-6 sm:px-8 lg:px-10">
       {showMenu && (
         <button
           type="button"
