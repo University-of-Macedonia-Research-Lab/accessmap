@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   title: "AccessMap",
   description:
     "Programmatic indoor accessibility maps with routing — a teaching project.",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "32x32" }],
+    apple: [{ url: "/favicon.png", sizes: "32x32" }],
+  },
 };
 
 export const viewport: Viewport = {

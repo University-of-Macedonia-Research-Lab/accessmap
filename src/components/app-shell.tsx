@@ -7,6 +7,7 @@
  * keeping the chrome (logo, nav, menu button) consistent across routes.
  */
 import { useState, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import {
@@ -99,9 +100,31 @@ function Header({
         </button>
       )}
 
-      <Link href="/" className="flex items-center gap-2 text-[color:var(--foreground)]">
-        <BrandMark />
-        <span className="text-h3 leading-none">AccessMap</span>
+      <Link
+        href="/"
+        className="flex shrink-0 items-center text-[color:var(--foreground)]"
+        aria-label="AccessMap home"
+      >
+        {/* Two-asset wordmark: dark text on light theme, light text on
+            dark theme. Both have the same shape, so we just toggle which
+            <img> is visible based on the .dark class on <html>. */}
+        <Image
+          src="/accessmap-logo-dark.svg"
+          alt="AccessMap"
+          width={140}
+          height={24}
+          priority
+          className="block h-7 w-auto dark:hidden"
+        />
+        <Image
+          src="/accessmap-logo-light.svg"
+          alt=""
+          aria-hidden="true"
+          width={140}
+          height={24}
+          priority
+          className="hidden h-7 w-auto dark:block"
+        />
       </Link>
 
       <div className="ml-2 hidden text-caption sm:block">{slot}</div>
@@ -126,14 +149,3 @@ function NavLink({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-function BrandMark() {
-  return (
-    <span
-      className="grid h-7 w-7 place-items-center rounded-md text-[11px] font-semibold tracking-wide text-[color:var(--brand-foreground)]"
-      style={{ background: "var(--brand)" }}
-      aria-hidden="true"
-    >
-      AM
-    </span>
-  );
-}
