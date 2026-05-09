@@ -60,7 +60,10 @@ export function AppShell({
       <div className="flex min-h-0 flex-1">
         {sidebar && (
           <aside
-            className="hidden w-80 shrink-0 overflow-y-auto scroll-smooth border-r border-[var(--border)] bg-[var(--surface-1)] lg:block"
+            // Surface-matched bg so a sidebar full of controls reads as
+            // an extension of the canvas the map is painted on, with the
+            // single border-r as the only seam between them.
+            className="hidden w-80 shrink-0 overflow-y-auto scroll-smooth border-r border-[var(--border)] bg-[var(--surface-2)] lg:block"
             aria-label={t.sidebar}
           >
             <div className="flex flex-col gap-4 p-4">{sidebar}</div>
