@@ -9,7 +9,7 @@
 import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -96,8 +96,8 @@ function Header({
 }) {
   const { lang } = useLang();
   const t = lang === "el"
-    ? { openSidebar: "Άνοιγμα πλαϊνού πίνακα", home: "Αρχική σελίδα", about: "Σχετικά", demo: "Άνοιγμα demo" }
-    : { openSidebar: "Open sidebar", home: "AccessMap home", about: "About", demo: "Open demo" };
+    ? { openSidebar: "Άνοιγμα πλαϊνού πίνακα", home: "Αρχική σελίδα", about: "Σχετικά" }
+    : { openSidebar: "Open sidebar", home: "AccessMap home", about: "About" };
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b border-[var(--border)] bg-[var(--background)] px-5 sm:gap-6 sm:px-8 lg:px-10">
       {showMenu && (
@@ -142,7 +142,6 @@ function Header({
 
       <nav className="ml-auto flex items-center gap-1 text-body sm:gap-2">
         <NavLink href="/about">{t.about}</NavLink>
-        <DemoCTA href="/maps/demo-building/ground" label={t.demo} />
         <LanguageToggle />
         <ThemeToggle />
       </nav>
@@ -161,19 +160,4 @@ function NavLink({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-/** Primary header CTA. Brand-coloured pill that drops the label text on
- *  narrow screens to keep the nav from overflowing — the icon alone still
- *  reads as "go to the demo". */
-function DemoCTA({ href, label }: { href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="group ml-1 inline-flex h-9 items-center gap-1.5 rounded-md bg-[var(--brand)] px-2.5 text-xs font-semibold text-white shadow-[var(--shadow-card)] transition-[background,transform] hover:bg-[var(--brand-strong)] active:translate-y-px sm:px-3 sm:text-sm"
-      aria-label={label}
-    >
-      <span className="hidden sm:inline">{label}</span>
-      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-    </Link>
-  );
-}
 
