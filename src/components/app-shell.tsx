@@ -54,14 +54,14 @@ export function AppShell({
       <div className="flex min-h-0 flex-1">
         {sidebar && (
           <aside
-            className="hidden w-80 shrink-0 overflow-y-auto border-r border-[var(--border)] bg-[var(--surface-1)] lg:block"
+            className="hidden w-80 shrink-0 overflow-y-auto scroll-smooth border-r border-[var(--border)] bg-[var(--surface-1)] lg:block"
             aria-label={t.sidebar}
           >
             <div className="flex flex-col gap-4 p-4">{sidebar}</div>
           </aside>
         )}
 
-        <main className="relative min-w-0 flex-1 overflow-y-auto">
+        <main className="relative min-w-0 flex-1 overflow-y-auto scroll-smooth">
           {children}
         </main>
       </div>

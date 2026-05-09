@@ -181,6 +181,13 @@
   html {
     font-family: var(--font-sans);
     -webkit-text-size-adjust: 100%;
+    /* Smooth anchor jumps + any programmatic scrollTo. Browsers honour
+     * prefers-reduced-motion automatically and fall back to instant. */
+    scroll-behavior: smooth;
+  }
+  /* Respect reduced-motion: turn off smooth scroll for users who asked. */
+  @media (prefers-reduced-motion: reduce) {
+    html, main, aside { scroll-behavior: auto !important; }
   }
 }
 
