@@ -285,8 +285,11 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
             setSelectedStepIdx(null);
           }}
           onClear={() => {
-            setFromRefState(defaultFrom);
-            setToRefState(defaultTo);
+            // Empty `room` makes RoomSelect render its placeholder; the
+            // existing manualPath check (`!fromRef.room || !toRef.room`)
+            // already short-circuits routing on empty refs.
+            setFromRefState({ floor: "", room: "" });
+            setToRefState({ floor: "", room: "" });
             setAiPath(null);
             setSelectedStepIdx(null);
           }}
@@ -568,9 +571,11 @@ function NavigateSettings({
         swap: "Αντιστροφή",
         clear: "Καθαρισμός",
         getDirections: "Οδηγίες",
+        pickRooms: "Επιλέξτε σημείο έναρξης και προορισμό.",
         noRoute: "Επιλέξτε δύο διαφορετικά δωμάτια.",
         noRouteForProfile: (p: string) => `Καμία διαδρομή για το προφίλ «${p.toLowerCase()}».`,
         or: "ή ρωτήστε τον βοηθό",
+        placeholder: "— Επιλέξτε δωμάτιο —",
       }
     : {
         profile: "Profile",
@@ -579,13 +584,19 @@ function NavigateSettings({
         swap: "Swap",
         clear: "Clear",
         getDirections: "Get directions",
+        pickRooms: "Pick a starting room and a destination.",
         noRoute: "Pick two different rooms.",
         noRouteForProfile: (p: string) => `No route for the ${p.toLowerCase()} profile.`,
         or: "or ask the assistant",
+        placeholder: "— Select a room —",
       };
 
   const profile: Profile = PROFILES[profileId] ?? PROFILES.default;
-  const sameRoom = fromRef.floor === toRef.floor && fromRef.room === toRef.room;
+  const isEmpty = !fromRef.room || !toRef.room;
+  const sameRoom =
+    !isEmpty &&
+    fromRef.floor === toRef.floor &&
+    fromRef.room === toRef.room;
 
   return (
     <div className="flex flex-col gap-5">
@@ -621,10 +632,20 @@ function NavigateSettings({
 
       <Section label={`${t.from} / ${t.to}`}>
         <Field label={t.from}>
-          <RoomSelect value={fromRef} options={options} onChange={onFromChange} />
+          <RoomSelect
+            value={fromRef}
+            options={options}
+            onChange={onFromChange}
+            placeholder={t.placeholder}
+          />
         </Field>
         <Field label={t.to}>
-          <RoomSelect value={toRef} options={options} onChange={onToChange} />
+          <RoomSelect
+            value={toRef}
+            options={options}
+            onChange={onToChange}
+            placeholder={t.placeholder}
+          />
         </Field>
         <div className="flex flex-wrap gap-2">
           <button
@@ -643,7 +664,9 @@ function NavigateSettings({
           </button>
         </div>
 
-        {sameRoom ? (
+        {isEmpty ? (
+          <p className="text-caption">{t.pickRooms}</p>
+        ) : sameRoom ? (
           <p className="text-caption">{t.noRoute}</p>
         ) : !activePath ? (
           <p className="text-caption text-[color:color-mix(in_oklab,var(--warning),#000_15%)]">
@@ -931,10 +954,12 @@ function RoomSelect({
   value,
   onChange,
   options,
+  placeholder,
 }: {
   value: RoomRef;
   onChange: (v: RoomRef) => void;
   options: RoomOption[];
+  placeholder?: string;
 }) {
   const byFloor = useMemo(() => {
     const m = new Map<string, { floorName: string; opts: RoomOption[] }>();
@@ -946,17 +971,26 @@ function RoomSelect({
     return Array.from(m.entries());
   }, [options]);
 
-  const currentValue = `${value.floor}|${value.room}`;
+  // Empty room → render the placeholder option as selected. The select's
+  // value matches the placeholder's value so the browser doesn't fall
+  // back to "first option" rendering.
+  const currentValue = value.room ? `${value.floor}|${value.room}` : "";
 
   return (
     <select
       value={currentValue}
       onChange={(e) => {
-        const [floor, ...rest] = e.target.value.split("|");
+        const v = e.target.value;
+        if (!v) {
+          onChange({ floor: "", room: "" });
+          return;
+        }
+        const [floor, ...rest] = v.split("|");
         onChange({ floor, room: rest.join("|") });
       }}
       className="w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-2.5 py-1.5 text-body shadow-sm focus:border-[var(--brand)] focus:outline-none"
     >
+      <option value="">{placeholder ?? "—"}</option>
       {byFloor.map(([floorSlug, { floorName, opts }]) => (
         <optgroup key={floorSlug} label={floorName}>
           {opts.map((o) => (
