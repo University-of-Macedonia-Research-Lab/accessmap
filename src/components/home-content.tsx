@@ -17,27 +17,117 @@ import {
   Users,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { useLang } from "@/lib/i18n";
+import { useLang, type Lang } from "@/lib/i18n";
+import { useScrollSpy } from "@/lib/use-scroll-spy";
+
+type HomeSection = {
+  id: string;
+  n: string;
+  topicEn: string;
+  topicEl: string;
+};
+
+const HOME_SECTIONS: HomeSection[] = [
+  { id: "web-accessibility", n: "01", topicEn: "Web accessibility", topicEl: "Προσβασιμότητα Web" },
+  { id: "map-accessibility", n: "02", topicEn: "Map accessibility", topicEl: "Προσβασιμότητα χάρτη" },
+  { id: "architecture", n: "03", topicEn: "Architecture", topicEl: "Αρχιτεκτονική" },
+  { id: "algorithms", n: "04", topicEn: "Algorithms", topicEl: "Αλγόριθμοι" },
+  { id: "drawing", n: "05", topicEn: "How to draw a map", topicEl: "Πώς να σχεδιάσετε" },
+  { id: "assistant", n: "06", topicEn: "Assistant", topicEl: "Βοηθός" },
+];
+
+const HOME_SECTION_IDS = HOME_SECTIONS.map((s) => s.id) as readonly string[];
 
 export function HomeContent() {
+  const { lang } = useLang();
+  const active = useScrollSpy(HOME_SECTION_IDS);
   return (
     <AppShell>
       <Hero />
-      <article className="relative mx-auto w-full max-w-5xl px-5 py-20 sm:px-8 sm:py-28">
+      <article className="relative mx-auto w-full max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
         <Backdrop />
-        <main className="relative flex flex-col gap-24 md:gap-32">
-          <Pillars />
-          <WebAccessibility n="01" />
-          <MapAccessibility n="02" />
-          <Architecture n="03" />
-          <Algorithms n="04" />
-          <DrawingAMap n="05" />
-          <AssistantSection n="06" />
-        </main>
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_220px] lg:gap-16">
+          <main className="relative flex min-w-0 flex-col gap-24 md:gap-32">
+            <Pillars />
+            <WebAccessibility n="01" />
+            <MapAccessibility n="02" />
+            <Architecture n="03" />
+            <Algorithms n="04" />
+            <DrawingAMap n="05" />
+            <AssistantSection n="06" />
+          </main>
+          <aside className="hidden lg:block">
+            <HomeToc active={active} lang={lang} />
+          </aside>
+        </div>
         <FinalCTA />
         <Footer />
       </article>
     </AppShell>
+  );
+}
+
+function HomeToc({
+  active,
+  lang,
+}: {
+  active: string | null;
+  lang: Lang;
+}) {
+  const isEl = lang === "el";
+  return (
+    <nav
+      aria-label={isEl ? "Πίνακας περιεχομένων" : "On this page"}
+      className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pr-2"
+    >
+      <p className="text-overline">{isEl ? "Σε αυτή τη σελίδα" : "On this page"}</p>
+      <ul className="mt-3 flex flex-col gap-0.5 border-l border-[var(--border)] pl-3">
+        {HOME_SECTIONS.map((s) => {
+          const isActive = active === s.id;
+          return (
+            <li key={s.id} className="relative">
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="absolute -left-[13px] top-1.5 bottom-1.5 w-[2px] rounded-r"
+                  style={{ background: "var(--brand)" }}
+                />
+              )}
+              <a
+                href={`#${s.id}`}
+                className={
+                  "flex items-baseline gap-2 rounded-md py-1.5 pr-2 text-caption transition-colors " +
+                  (isActive
+                    ? "text-[color:var(--brand)]"
+                    : "text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]")
+                }
+              >
+                <span className="font-mono text-[0.7rem] tabular-nums opacity-70">
+                  {s.n}
+                </span>
+                <span className={isActive ? "font-medium" : ""}>
+                  {isEl ? s.topicEl : s.topicEn}
+                </span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-6 text-caption text-[color:var(--muted-foreground)]">
+        <a
+          href="#top"
+          onClick={(e) => {
+            e.preventDefault();
+            const main = document.querySelector("main");
+            if (main) main.scrollTo({ top: 0, behavior: "smooth" });
+            else window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="hover:text-[color:var(--foreground)]"
+        >
+          {isEl ? "Επιστροφή στην αρχή" : "Back to top"} ↑
+        </a>
+      </p>
+    </nav>
   );
 }
 
@@ -454,7 +544,7 @@ function WebAccessibility({ n }: { n: string }) {
           "Before a map can route a wheelchair through a building, the page that hosts it has to be operable by a keyboard, parsable by a screen reader, and legible to someone with low vision. Those are the table stakes, WCAG 2.2 AA, encoded in our component primitives rather than bolted on at the end.",
       };
   return (
-    <Section n={n} ornament="tr" kicker={head.kicker} title={head.title} lead={head.lead}>
+    <Section id="web-accessibility" n={n} ornament="tr" kicker={head.kicker} title={head.title} lead={head.lead}>
       <div className="grid gap-4 sm:grid-cols-2">
         {items.map((it) => (
           <FeatureCard key={it.title} {...it} />
@@ -552,7 +642,7 @@ function MapAccessibility({ n }: { n: string }) {
         ),
       };
   return (
-    <Section n={n} ornament="tl" kicker={head.kicker} title={head.title} lead={head.lead}>
+    <Section id="map-accessibility" n={n} ornament="tl" kicker={head.kicker} title={head.title} lead={head.lead}>
       <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-card)]">
         <table className="w-full text-body">
           <thead className="bg-[var(--surface-2)] text-overline">
@@ -613,7 +703,7 @@ function Architecture({ n }: { n: string }) {
         ] as Array<[string, string]>,
       };
   return (
-    <Section n={n} ornament="tr" kicker={head.kicker} title={head.title} lead={head.lead}>
+    <Section id="architecture" n={n} ornament="tr" kicker={head.kicker} title={head.title} lead={head.lead}>
       <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
         <ArchitectureDiagram />
         <div className="flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 shadow-[var(--shadow-card)]">
@@ -830,7 +920,7 @@ function Algorithms({ n }: { n: string }) {
         ),
       };
   return (
-    <Section n={n} ornament="bl" kicker={head.kicker} title={head.title} lead={head.lead}>
+    <Section id="algorithms" n={n} ornament="bl" kicker={head.kicker} title={head.title} lead={head.lead}>
       <div className="grid gap-4 lg:grid-cols-[1.05fr_1fr]">
         <Card>
           <h3 className="text-h3">{head.astarTitle}</h3>
@@ -917,7 +1007,7 @@ function DrawingAMap({ n }: { n: string }) {
         { n: "06", title: "Validate and ship", body: (<>Drop the file under <Code>src/data/maps/&lt;building&gt;/&lt;floor&gt;.json</Code>. Zod parses it on load: wrong shape, fast failure. The home page, floor switcher, and assistant pick it up automatically.</>) },
       ];
   return (
-    <Section n={n} ornament="tl" kicker={head.kicker} title={head.title} lead={head.lead}>
+    <Section id="drawing" n={n} ornament="tl" kicker={head.kicker} title={head.title} lead={head.lead}>
       <ol className="grid gap-3 sm:grid-cols-2">
         {steps.map((s) => (
           <li key={s.n} className="flex flex-col gap-2 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 shadow-[var(--shadow-card)]">
@@ -987,7 +1077,7 @@ function AssistantSection({ n }: { n: string }) {
         ),
       };
   return (
-    <Section n={n} ornament="br" kicker={head.kicker} title={head.title} lead={head.lead}>
+    <Section id="assistant" n={n} ornament="br" kicker={head.kicker} title={head.title} lead={head.lead}>
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-[color:var(--brand)]" style={{ background: "var(--brand-soft)" }}>
@@ -1121,6 +1211,7 @@ function Footer() {
 /* ─── Shared primitives ───────────────────────────────────────────────────── */
 
 function Section({
+  id,
   n,
   kicker,
   title,
@@ -1128,6 +1219,7 @@ function Section({
   children,
   ornament = "tl",
 }: {
+  id?: string;
   n?: string;
   kicker: string;
   title: string;
@@ -1136,7 +1228,13 @@ function Section({
   ornament?: "tl" | "tr" | "bl" | "br";
 }) {
   return (
-    <section className="relative flex flex-col gap-6">
+    <section
+      id={id}
+      // pt-6 lifts the big plate numeral off the corner ornament so the
+      // dots and L-bracket aren't hidden behind the numeral. scroll-mt-24
+      // keeps anchor jumps clear of the sticky 64px header.
+      className="relative scroll-mt-24 flex flex-col gap-6 pt-6"
+    >
       <SectionOrnament position={ornament} />
       <header className="flex flex-col gap-3">
         {n ? (

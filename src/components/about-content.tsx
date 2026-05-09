@@ -9,16 +9,12 @@
  * fading hairline accent, corner ornaments — so the two surfaces feel
  * like one document.
  */
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { useLang, type Lang } from "@/lib/i18n";
+import { useLang } from "@/lib/i18n";
+import { useScrollSpy } from "@/lib/use-scroll-spy";
 
 type SectionKey =
   | "schema"
@@ -48,8 +44,10 @@ const SECTIONS: SectionEntry[] = [
   { key: "design", n: "08", topicEn: "Design system", topicEl: "Σχεδιαστικό σύστημα" },
 ];
 
+const SECTION_IDS = SECTIONS.map((s) => s.key) as readonly string[];
+
 export function AboutContent() {
-  const active = useScrollSpy(SECTIONS.map((s) => s.key));
+  const active = useScrollSpy(SECTION_IDS) as SectionKey | null;
   return (
     <AppShell>
       <article className="relative mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
@@ -76,91 +74,6 @@ export function AboutContent() {
   );
 }
 
-/**
- * Scroll-spy that watches a list of element ids and returns whichever one
- * currently sits in the upper-middle of the viewport. Uses
- * IntersectionObserver with a tight rootMargin so the active-section
- * change feels precise instead of "whenever the section first peeks into
- * view". The observer's implicit root is the visual viewport, which is
- * what we want — works regardless of whether a parent element actually
- * scrolls, so it survives the AppShell's `<main overflow-y-auto>` setup.
- */
-function useScrollSpy(ids: SectionKey[]): SectionKey | null {
-  const [active, setActive] = useState<SectionKey | null>(null);
-
-  useEffect(() => {
-    const elements = ids
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => Boolean(el));
-    if (elements.length === 0) return;
-
-    // Track which elements are currently "in the active band" (between
-    // 10% and 60% of viewport height). The observer fires whenever
-    // entries cross those edges; we recompute the active id from the set
-    // of currently-intersecting entries every time.
-    const intersecting = new Set<SectionKey>();
-
-    const pick = () => {
-      // Among the intersecting sections, pick the one whose top is
-      // smallest (i.e. nearest the top of the viewport).
-      let bestId: SectionKey | null = null;
-      let bestTop = Infinity;
-      for (const id of intersecting) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        const top = el.getBoundingClientRect().top;
-        if (top < bestTop) {
-          bestTop = top;
-          bestId = id;
-        }
-      }
-      // Fallback: if nothing's intersecting (we're below the last
-      // section), keep the previously active id rather than wiping it.
-      if (bestId !== null) setActive((cur) => (cur === bestId ? cur : bestId));
-    };
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          const id = e.target.id as SectionKey;
-          if (e.isIntersecting) intersecting.add(id);
-          else intersecting.delete(id);
-        }
-        pick();
-      },
-      {
-        // Active band: top 10% to top 60% of the viewport.
-        rootMargin: "-10% 0px -40% 0px",
-        threshold: 0,
-      },
-    );
-
-    for (const el of elements) observer.observe(el);
-
-    // Seed initial active state on mount so the first paint isn't
-    // blank — pick whichever section is closest to (but above) the 25%
-    // viewport line.
-    const seedTarget = window.innerHeight * 0.25;
-    let seed: SectionKey | null = null;
-    let seedDist = Infinity;
-    for (const el of elements) {
-      const top = el.getBoundingClientRect().top;
-      if (top <= seedTarget) {
-        const d = seedTarget - top;
-        if (d < seedDist) {
-          seedDist = d;
-          seed = el.id as SectionKey;
-        }
-      }
-    }
-    if (seed) setActive(seed);
-    else if (elements[0]) setActive(elements[0].id as SectionKey);
-
-    return () => observer.disconnect();
-  }, [ids]);
-
-  return active;
-}
 
 /* ─── Backdrop ────────────────────────────────────────────────────────────── */
 
@@ -325,7 +238,10 @@ function NumberedSection({
     <section
       id={id}
       // Offset for the sticky 64px header + breathing room on anchor jumps.
-      className="relative scroll-mt-24 flex flex-col gap-6"
+      // `pt-6` keeps the big plate numeral from sitting on top of a top-
+      // anchored corner ornament; bottom-anchored ornaments don't conflict
+      // but the extra padding stays harmless.
+      className="relative scroll-mt-24 flex flex-col gap-6 pt-6"
     >
       {/* Active-section indicator: a thin brand bar to the left of the
           section, only visible when this section is the one in the

@@ -96,8 +96,18 @@ function Header({
 }) {
   const { lang } = useLang();
   const t = lang === "el"
-    ? { openSidebar: "Άνοιγμα πλαϊνού πίνακα", home: "Αρχική σελίδα", about: "Σχετικά" }
-    : { openSidebar: "Open sidebar", home: "AccessMap home", about: "About" };
+    ? {
+        openSidebar: "Άνοιγμα πλαϊνού πίνακα",
+        homeAria: "Αρχική σελίδα",
+        home: "Αρχική",
+        about: "Σχετικά",
+      }
+    : {
+        openSidebar: "Open sidebar",
+        homeAria: "AccessMap home",
+        home: "Home",
+        about: "About",
+      };
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b border-[var(--border)] bg-[var(--background)] px-5 sm:gap-6 sm:px-8 lg:px-10">
       {showMenu && (
@@ -114,7 +124,7 @@ function Header({
       <Link
         href="/"
         className="flex shrink-0 items-center text-[color:var(--foreground)]"
-        aria-label={t.home}
+        aria-label={t.homeAria}
       >
         {/* Two-asset wordmark: dark text on light theme, light text on
             dark theme. Both have the same shape, so we just toggle which
@@ -141,6 +151,7 @@ function Header({
       <div className="ml-2 hidden text-caption sm:block">{slot}</div>
 
       <nav className="ml-auto flex items-center gap-1 text-body sm:gap-2">
+        <NavLink href="/">{t.home}</NavLink>
         <NavLink href="/about">{t.about}</NavLink>
         <LanguageToggle />
         <ThemeToggle />
