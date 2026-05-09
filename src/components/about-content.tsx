@@ -49,6 +49,7 @@ const SECTIONS: SectionEntry[] = [
 ];
 
 export function AboutContent() {
+  const active = useScrollSpy(SECTIONS.map((s) => s.key));
   return (
     <AppShell>
       <article className="relative mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
@@ -56,23 +57,109 @@ export function AboutContent() {
         <Hero />
         <div className="mt-16 grid gap-12 lg:mt-20 lg:grid-cols-[minmax(0,1fr)_240px] lg:gap-16">
           <main className="flex min-w-0 flex-col gap-20">
-            <SchemaSection />
-            <DrawingSection />
-            <RoutingSection />
-            <MultiFloorSection />
-            <ProfilesSection />
-            <AssistantSection />
-            <StackSection />
-            <DesignSection />
+            <SchemaSection isActive={active === "schema"} />
+            <DrawingSection isActive={active === "drawing"} />
+            <RoutingSection isActive={active === "routing"} />
+            <MultiFloorSection isActive={active === "multi-floor"} />
+            <ProfilesSection isActive={active === "profiles"} />
+            <AssistantSection isActive={active === "assistant"} />
+            <StackSection isActive={active === "stack"} />
+            <DesignSection isActive={active === "design"} />
             <Footer />
           </main>
           <aside className="hidden lg:block">
-            <Toc />
+            <Toc active={active} />
           </aside>
         </div>
       </article>
     </AppShell>
   );
+}
+
+/**
+ * Scroll-spy that watches a list of element ids and returns whichever one
+ * currently sits in the upper-middle of the viewport. Uses
+ * IntersectionObserver with a tight rootMargin so the active-section
+ * change feels precise instead of "whenever the section first peeks into
+ * view". The observer's implicit root is the visual viewport, which is
+ * what we want — works regardless of whether a parent element actually
+ * scrolls, so it survives the AppShell's `<main overflow-y-auto>` setup.
+ */
+function useScrollSpy(ids: SectionKey[]): SectionKey | null {
+  const [active, setActive] = useState<SectionKey | null>(null);
+
+  useEffect(() => {
+    const elements = ids
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => Boolean(el));
+    if (elements.length === 0) return;
+
+    // Track which elements are currently "in the active band" (between
+    // 10% and 60% of viewport height). The observer fires whenever
+    // entries cross those edges; we recompute the active id from the set
+    // of currently-intersecting entries every time.
+    const intersecting = new Set<SectionKey>();
+
+    const pick = () => {
+      // Among the intersecting sections, pick the one whose top is
+      // smallest (i.e. nearest the top of the viewport).
+      let bestId: SectionKey | null = null;
+      let bestTop = Infinity;
+      for (const id of intersecting) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const top = el.getBoundingClientRect().top;
+        if (top < bestTop) {
+          bestTop = top;
+          bestId = id;
+        }
+      }
+      // Fallback: if nothing's intersecting (we're below the last
+      // section), keep the previously active id rather than wiping it.
+      if (bestId !== null) setActive((cur) => (cur === bestId ? cur : bestId));
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const id = e.target.id as SectionKey;
+          if (e.isIntersecting) intersecting.add(id);
+          else intersecting.delete(id);
+        }
+        pick();
+      },
+      {
+        // Active band: top 10% to top 60% of the viewport.
+        rootMargin: "-10% 0px -40% 0px",
+        threshold: 0,
+      },
+    );
+
+    for (const el of elements) observer.observe(el);
+
+    // Seed initial active state on mount so the first paint isn't
+    // blank — pick whichever section is closest to (but above) the 25%
+    // viewport line.
+    const seedTarget = window.innerHeight * 0.25;
+    let seed: SectionKey | null = null;
+    let seedDist = Infinity;
+    for (const el of elements) {
+      const top = el.getBoundingClientRect().top;
+      if (top <= seedTarget) {
+        const d = seedTarget - top;
+        if (d < seedDist) {
+          seedDist = d;
+          seed = el.id as SectionKey;
+        }
+      }
+    }
+    if (seed) setActive(seed);
+    else if (elements[0]) setActive(elements[0].id as SectionKey);
+
+    return () => observer.disconnect();
+  }, [ids]);
+
+  return active;
 }
 
 /* ─── Backdrop ────────────────────────────────────────────────────────────── */
@@ -156,51 +243,9 @@ function Hero() {
 
 /* ─── TOC ─────────────────────────────────────────────────────────────────── */
 
-function Toc() {
+function Toc({ active }: { active: SectionKey | null }) {
   const { lang } = useLang();
   const isEl = lang === "el";
-  const [active, setActive] = useState<SectionKey | null>(null);
-
-  useEffect(() => {
-    const els = SECTIONS
-      .map((s) => document.getElementById(s.key))
-      .filter((e): e is HTMLElement => Boolean(e));
-
-    if (els.length === 0) return;
-
-    // Custom scroll-spy: pick the section whose top is closest to (but
-    // above) the 25% viewport line. More predictable than IntersectionObserver
-    // for nested headings of varying height.
-    const compute = () => {
-      const target = window.innerHeight * 0.25;
-      let bestKey: SectionKey | null = null;
-      let bestDist = Infinity;
-      for (const el of els) {
-        const top = el.getBoundingClientRect().top;
-        if (top <= target) {
-          const dist = target - top;
-          if (dist < bestDist) {
-            bestDist = dist;
-            bestKey = el.id as SectionKey;
-          }
-        }
-      }
-      // If we're above the first section, fall back to the first one.
-      if (!bestKey && els[0].getBoundingClientRect().top < window.innerHeight)
-        bestKey = els[0].id as SectionKey;
-      setActive((cur) => (cur === bestKey ? cur : bestKey));
-    };
-
-    compute();
-    const onScroll = () => compute();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, []);
-
   return (
     <nav
       aria-label={isEl ? "Πίνακας περιεχομένων" : "On this page"}
@@ -264,6 +309,7 @@ function NumberedSection({
   title,
   lead,
   ornament = "tl",
+  isActive = false,
   children,
 }: {
   id: SectionKey;
@@ -272,6 +318,7 @@ function NumberedSection({
   title: string;
   lead?: ReactNode;
   ornament?: "tl" | "tr" | "bl" | "br";
+  isActive?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -280,9 +327,22 @@ function NumberedSection({
       // Offset for the sticky 64px header + breathing room on anchor jumps.
       className="relative scroll-mt-24 flex flex-col gap-6"
     >
+      {/* Active-section indicator: a thin brand bar to the left of the
+          section, only visible when this section is the one in the
+          scroll-spy band. Positioned outside the content flow so the
+          layout doesn't shift when active state changes. */}
+      <span
+        aria-hidden
+        className="absolute -left-4 top-1 hidden w-[3px] rounded-full transition-opacity duration-300 md:block"
+        style={{
+          background: "var(--brand)",
+          height: "5.5rem",
+          opacity: isActive ? 1 : 0,
+        }}
+      />
       <SectionOrnament position={ornament} />
       <header className="flex flex-col gap-3">
-        <NumberedKicker n={n} topic={topic} />
+        <NumberedKicker n={n} topic={topic} isActive={isActive} />
         <h2 className="text-h1 max-w-[26ch]">{title}</h2>
         {lead && <p className="text-lead max-w-[60ch]">{lead}</p>}
       </header>
@@ -291,15 +351,28 @@ function NumberedSection({
   );
 }
 
-function NumberedKicker({ n, topic }: { n: string; topic: string }) {
+function NumberedKicker({
+  n,
+  topic,
+  isActive = false,
+}: {
+  n: string;
+  topic: string;
+  isActive?: boolean;
+}) {
   return (
     <div className="flex items-end gap-4">
       <span
         aria-hidden
-        className="font-bold tabular-nums leading-[0.78] tracking-[-0.05em]"
+        className="font-bold tabular-nums leading-[0.78] tracking-[-0.05em] transition-[filter] duration-300"
         style={{
           color: "var(--brand)",
           fontSize: "clamp(3.5rem, 8vw, 5.5rem)",
+          // Subtle glow on the plate numeral when active — works as a
+          // peripheral cue without being loud.
+          filter: isActive
+            ? "drop-shadow(0 0 18px color-mix(in oklab, var(--brand), transparent 70%))"
+            : "none",
         }}
       >
         {n}
@@ -308,11 +381,12 @@ function NumberedKicker({ n, topic }: { n: string; topic: string }) {
         <span className="text-overline text-[color:var(--brand)]">{topic}</span>
         <span
           aria-hidden
-          className="h-px w-full"
+          className="h-px w-full transition-[background] duration-500"
           style={{
-            background:
-              "linear-gradient(to right, var(--brand) 0%, var(--brand) 36%, transparent 100%)",
-            opacity: 0.5,
+            background: isActive
+              ? "linear-gradient(to right, var(--brand) 0%, var(--brand) 100%, transparent 100%)"
+              : "linear-gradient(to right, var(--brand) 0%, var(--brand) 36%, transparent 100%)",
+            opacity: isActive ? 0.85 : 0.5,
           }}
         />
       </span>
@@ -378,7 +452,7 @@ function SectionOrnament({
 
 /* ─── 01 Schema ───────────────────────────────────────────────────────────── */
 
-function SchemaSection() {
+function SchemaSection({ isActive }: { isActive: boolean }) {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
@@ -427,7 +501,7 @@ function SchemaSection() {
         ),
       };
   return (
-    <NumberedSection id="schema" n="01" topic={t.topic} title={t.title} lead={t.lead} ornament="tr">
+    <NumberedSection id="schema" n="01" topic={t.topic} title={t.title} lead={t.lead} ornament="tr" isActive={isActive}>
       <p className="text-body">{t.body}</p>
       <CodeBlock>
 {`{
@@ -448,7 +522,7 @@ function SchemaSection() {
 
 /* ─── 02 Drawing ──────────────────────────────────────────────────────────── */
 
-function DrawingSection() {
+function DrawingSection({ isActive }: { isActive: boolean }) {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
@@ -475,7 +549,7 @@ function DrawingSection() {
         ],
       };
   return (
-    <NumberedSection id="drawing" n="02" topic={t.topic} title={t.title} lead={t.lead} ornament="tl">
+    <NumberedSection id="drawing" n="02" topic={t.topic} title={t.title} lead={t.lead} ornament="tl" isActive={isActive}>
       <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
           <Bullet key={i}>
@@ -490,7 +564,7 @@ function DrawingSection() {
 
 /* ─── 03 Routing ──────────────────────────────────────────────────────────── */
 
-function RoutingSection() {
+function RoutingSection({ isActive }: { isActive: boolean }) {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
@@ -529,7 +603,7 @@ function RoutingSection() {
         ),
       };
   return (
-    <NumberedSection id="routing" n="03" topic={t.topic} title={t.title} lead={t.lead} ornament="tr">
+    <NumberedSection id="routing" n="03" topic={t.topic} title={t.title} lead={t.lead} ornament="tr" isActive={isActive}>
       <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
           <Bullet key={i}>
@@ -545,7 +619,7 @@ function RoutingSection() {
 
 /* ─── 04 Multi-floor ──────────────────────────────────────────────────────── */
 
-function MultiFloorSection() {
+function MultiFloorSection({ isActive }: { isActive: boolean }) {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
@@ -585,7 +659,7 @@ function MultiFloorSection() {
         ),
       };
   return (
-    <NumberedSection id="multi-floor" n="04" topic={t.topic} title={t.title} lead={t.lead} ornament="bl">
+    <NumberedSection id="multi-floor" n="04" topic={t.topic} title={t.title} lead={t.lead} ornament="bl" isActive={isActive}>
       <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
           <Bullet key={i}>{it}</Bullet>
@@ -598,7 +672,7 @@ function MultiFloorSection() {
 
 /* ─── 05 Profiles ─────────────────────────────────────────────────────────── */
 
-function ProfilesSection() {
+function ProfilesSection({ isActive }: { isActive: boolean }) {
   const { lang } = useLang();
   const isEl = lang === "el";
   const rows: Array<[string, string, string, string]> = [
@@ -630,7 +704,7 @@ function ProfilesSection() {
         h4: "Visually impaired",
       };
   return (
-    <NumberedSection id="profiles" n="05" topic={t.topic} title={t.title} lead={t.lead} ornament="tl">
+    <NumberedSection id="profiles" n="05" topic={t.topic} title={t.title} lead={t.lead} ornament="tl" isActive={isActive}>
       <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-card)]">
         <table className="w-full text-body">
           <thead className="bg-[var(--surface-2)] text-overline">
@@ -661,7 +735,7 @@ function ProfilesSection() {
 
 /* ─── 06 Assistant ────────────────────────────────────────────────────────── */
 
-function AssistantSection() {
+function AssistantSection({ isActive }: { isActive: boolean }) {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
@@ -700,7 +774,7 @@ function AssistantSection() {
         ),
       };
   return (
-    <NumberedSection id="assistant" n="06" topic={t.topic} title={t.title} lead={t.lead} ornament="tr">
+    <NumberedSection id="assistant" n="06" topic={t.topic} title={t.title} lead={t.lead} ornament="tr" isActive={isActive}>
       <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
           <Bullet key={i}>
@@ -716,7 +790,7 @@ function AssistantSection() {
 
 /* ─── 07 Stack ────────────────────────────────────────────────────────────── */
 
-function StackSection() {
+function StackSection({ isActive }: { isActive: boolean }) {
   const { lang } = useLang();
   const isEl = lang === "el";
   const items: Array<[string, string]> = isEl
@@ -746,7 +820,7 @@ function StackSection() {
     ? { topic: "Στοίβα", title: "Τι τρέχει", lead: "Όλα τα κομμάτια του puzzle, και γιατί επιλέχθηκαν." }
     : { topic: "Stack", title: "What's running", lead: "Every piece of the stack, and why it's there." };
   return (
-    <NumberedSection id="stack" n="07" topic={t.topic} title={t.title} lead={t.lead} ornament="bl">
+    <NumberedSection id="stack" n="07" topic={t.topic} title={t.title} lead={t.lead} ornament="bl" isActive={isActive}>
       <ul className="grid gap-3 sm:grid-cols-2">
         {items.map(([name, desc]) => (
           <li
@@ -764,7 +838,7 @@ function StackSection() {
 
 /* ─── 08 Design system ────────────────────────────────────────────────────── */
 
-function DesignSection() {
+function DesignSection({ isActive }: { isActive: boolean }) {
   const { lang } = useLang();
   const isEl = lang === "el";
   const swatches: Array<{ name: string; cssVar: string; note: string }> = isEl
@@ -821,7 +895,7 @@ function DesignSection() {
     ? { topic: "Σχεδιαστικό σύστημα", title: "Tokens και κλίμακα τυπογραφίας", colors: "Color tokens", typescale: "Type scale" }
     : { topic: "Design system", title: "Tokens and type scale", colors: "Color tokens", typescale: "Type scale" };
   return (
-    <NumberedSection id="design" n="08" topic={t.topic} title={t.title} ornament="tr">
+    <NumberedSection id="design" n="08" topic={t.topic} title={t.title} ornament="tr" isActive={isActive}>
       <div className="flex flex-col gap-4">
         <h3 className="text-h3">{t.colors}</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
