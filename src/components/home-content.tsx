@@ -682,6 +682,9 @@ function Architecture({ n }: { n: string }) {
         lead:
           "Ένας όροφος περιγράφεται ως δεδομένα: γεωμετρία συν ένα γράφημα που ζει δίπλα της. Ο σχεδιαστής διαβάζει τη γεωμετρία για να ζωγραφίσει, ο δρομολογητής διαβάζει το γράφημα για να βρει διαδρομή, και ο βοηθός τα διαβάζει και τα δύο μέσω εργαλείων. Κανείς τους δεν επικαλύπτει τους άλλους.",
         primitivesTitle: "Τα τέσσερα πρωτογενή στοιχεία",
+        codeTitle: "Σχήμα ορόφου, απλοποιημένο",
+        codeCaption:
+          "Ένας πραγματικός όροφος έχει περισσότερα πεδία και walls/doors. Αυτή η εκδοχή δείχνει την ουσία.",
         items: [
           ["Δωμάτια", "Πολύγωνα σε ένα επίπεδο 2-D σύστημα συντεταγμένων. Καθένα φέρει ένα είδος (αίθουσα, γραφείο, εργαστήριο, …) και δίγλωσσο όνομα."],
           ["Πόρτες", "Σημεία σε τοίχο που μοιράζονται δύο δωμάτια. Ο σχεδιαστής τα σημειώνει· το γράφημα ήδη κωδικοποιεί τη συνδεσιμότητα, οπότε οι πόρτες είναι οπτικό συμπλήρωμα, όχι δεδομένα δρομολόγησης."],
@@ -695,6 +698,9 @@ function Architecture({ n }: { n: string }) {
         lead:
           "A floor is described as data: geometry plus a graph that lives alongside it. The renderer reads the geometry to draw, the pathfinder reads the graph to route, and the assistant reads both through tools. None of them duplicates the other.",
         primitivesTitle: "The four primitives",
+        codeTitle: "Floor schema, simplified",
+        codeCaption:
+          "A real floor has more fields and walls/doors. This abridged shape shows the spine.",
         items: [
           ["Rooms", "Polygons in a flat 2-D coordinate frame. Each carries a kind (classroom, office, lab, …) and a bilingual name."],
           ["Doors", "Points on a wall shared by two rooms. The renderer marks them; the graph already encodes that connectivity, so doors are visual sugar, not routing data."],
@@ -704,11 +710,19 @@ function Architecture({ n }: { n: string }) {
       };
   return (
     <Section id="architecture" n={n} ornament="tr" kicker={head.kicker} title={head.title} lead={head.lead}>
-      <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
-        <ArchitectureDiagram />
-        <div className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 shadow-[var(--shadow-card)]">
-          <h3 className="text-h3">{head.primitivesTitle}</h3>
-          <DefList items={head.items} />
+      <div className="flex flex-col gap-4">
+        <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
+          <ArchitectureDiagram />
+          <div className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 shadow-[var(--shadow-card)]">
+            <h3 className="text-h3">{head.primitivesTitle}</h3>
+            <DefList items={head.items} />
+          </div>
+        </div>
+        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 shadow-[var(--shadow-card)]">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="text-h3">{head.codeTitle}</h3>
+            <span className="text-caption">{head.codeCaption}</span>
+          </div>
           <pre className="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4 font-mono text-caption leading-relaxed">
 {`{
   "outline": [{ "x": 0, "y": 0 }, …],
