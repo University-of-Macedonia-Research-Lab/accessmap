@@ -24,6 +24,7 @@ type Props = {
   map: FloorMap;
   showGraph?: boolean;
   highlightedRoute?: string[];
+  emphasisedNodeId?: string;
   lang?: "en" | "el";
   onRoomClick?: (roomId: string) => void;
 };
@@ -32,6 +33,7 @@ export function LeafletFloorMap({
   map,
   showGraph,
   highlightedRoute,
+  emphasisedNodeId,
   lang,
   onRoomClick,
 }: Props) {
@@ -87,6 +89,7 @@ export function LeafletFloorMap({
           map={map}
           showGraph={showGraph}
           highlightedRoute={highlightedRoute}
+          emphasisedNodeId={emphasisedNodeId}
           lang={lang}
           onRoomClick={onRoomClick}
         />

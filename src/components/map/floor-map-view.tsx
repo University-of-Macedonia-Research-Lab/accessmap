@@ -18,6 +18,9 @@ type Props = {
   showGraph?: boolean;
   /** Highlight an ordered list of node ids, used to draw a computed route. */
   highlightedRoute?: string[];
+  /** Single node id to emphasise on top of the route — e.g. the node a
+   *  selected directions step lands on. Drawn as a pulsing brand ring. */
+  emphasisedNodeId?: string;
   /** Language for labels. */
   lang?: "en" | "el";
   onRoomClick?: (roomId: string) => void;
@@ -74,6 +77,7 @@ export function FloorMapInner({
   map,
   showGraph = false,
   highlightedRoute,
+  emphasisedNodeId,
   lang = "en",
   onRoomClick,
 }: Props) {
@@ -283,6 +287,40 @@ export function FloorMapInner({
             ))}
         </>
       )}
+
+      {/* Step emphasis ring — pulsing brand circle anchored on whichever
+          node a selected directions step points to, drawn last so it
+          sits on top of the route. */}
+      {emphasisedNodeId && (() => {
+        const node = nodesById.get(emphasisedNodeId);
+        if (!node) return null;
+        const r = longest * 0.018;
+        return (
+          <g pointerEvents="none">
+            <circle
+              cx={node.position.x}
+              cy={node.position.y}
+              r={r * 2.4}
+              fill="var(--brand)"
+              className="accessmap-step-pulse"
+            />
+            <circle
+              cx={node.position.x}
+              cy={node.position.y}
+              r={r}
+              fill="var(--route-halo)"
+              stroke="var(--brand)"
+              strokeWidth={r * 0.35}
+            />
+            <circle
+              cx={node.position.x}
+              cy={node.position.y}
+              r={r * 0.45}
+              fill="var(--brand)"
+            />
+          </g>
+        );
+      })()}
     </>
   );
 }

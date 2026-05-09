@@ -86,9 +86,6 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
         navigate: "Navigate",
       };
 
-  const currentFloor =
-    floors.find((f) => f.floorSlug === currentFloorSlug) ?? floors[0];
-
   const allRoomOptions = useMemo(
     () =>
       floors.flatMap((f) =>
@@ -138,17 +135,35 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
   const [tab, setTab] = useState<Tab>("navigate");
   const [navView, setNavView] = useState<NavView>("settings");
 
+  // Floor switching is local now (not URL navigation) so route + step
+  // selection state survive across floor changes triggered by clicking
+  // a directions step or a floor in the explore list.
+  const [displayedFloorSlug, setDisplayedFloorSlug] = useState(currentFloorSlug);
+  useEffect(() => {
+    setDisplayedFloorSlug(currentFloorSlug);
+  }, [currentFloorSlug]);
+
+  const currentFloor =
+    floors.find((f) => f.floorSlug === displayedFloorSlug) ?? floors[0];
+
+  // Step the user has clicked in the directions list. Cleared whenever
+  // the active path changes (a new path = new step indices).
+  const [selectedStepIdx, setSelectedStepIdx] = useState<number | null>(null);
+
   const setFromRef = (v: RoomRef) => {
     setFromRefState(v);
     setAiPath(null);
+    setSelectedStepIdx(null);
   };
   const setToRef = (v: RoomRef) => {
     setToRefState(v);
     setAiPath(null);
+    setSelectedStepIdx(null);
   };
   const setProfileId = (v: string) => {
     setProfileIdState(v);
     setAiPath(null);
+    setSelectedStepIdx(null);
   };
 
   const profile: Profile = PROFILES[profileId] ?? PROFILES.default;
@@ -174,11 +189,43 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
   const currentSegmentNodes = useMemo(() => {
     if (!activePath) return undefined;
     const segs = activePath.segments.filter(
-      (s) => s.floorSlug === currentFloorSlug,
+      (s) => s.floorSlug === displayedFloorSlug,
     );
     if (segs.length === 0) return undefined;
     return segs.flatMap((s) => s.nodes);
-  }, [activePath, currentFloorSlug]);
+  }, [activePath, displayedFloorSlug]);
+
+  // Compute directions at the page level so we can drive both the panel
+  // (which renders them) and the step-selection state (which lives here).
+  const directionsSteps = useMemo(
+    () =>
+      activePath ? buildDirections(activePath, fromRef, toRef, floors, lang) : [],
+    [activePath, fromRef, toRef, floors, lang],
+  );
+
+  // Clear the step selection whenever the route changes — old indices
+  // would point to a different step.
+  useEffect(() => {
+    setSelectedStepIdx(null);
+  }, [activePath]);
+
+  // The node id to pulse on the map: only when the selected step lives
+  // on the floor we're currently displaying.
+  const emphasisedNodeId = useMemo(() => {
+    if (selectedStepIdx === null) return undefined;
+    const step = directionsSteps[selectedStepIdx];
+    if (!step) return undefined;
+    if (step.floorSlug !== displayedFloorSlug) return undefined;
+    return step.nodeId;
+  }, [selectedStepIdx, directionsSteps, displayedFloorSlug]);
+
+  const handleSelectStep = (idx: number) => {
+    setSelectedStepIdx(idx);
+    const step = directionsSteps[idx];
+    if (step && step.floorSlug !== displayedFloorSlug) {
+      setDisplayedFloorSlug(step.floorSlug);
+    }
+  };
 
   const sidebar = (
     <div className="flex flex-col gap-4">
@@ -196,22 +243,26 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
       {tab === "explore" ? (
         <ExplorePanel
           lang={lang}
-          buildingSlug={buildingSlug}
           floors={floors}
           currentFloor={currentFloor}
-          currentFloorSlug={currentFloorSlug}
+          displayedFloorSlug={displayedFloorSlug}
+          onSelectFloor={(slug) => {
+            setDisplayedFloorSlug(slug);
+            setSelectedStepIdx(null);
+          }}
+          buildingSlug={buildingSlug}
           showGraph={showGraph}
           onShowGraphChange={setShowGraph}
         />
       ) : navView === "directions" && activePath ? (
         <DirectionsPanel
           lang={lang}
+          steps={directionsSteps}
+          selectedIdx={selectedStepIdx}
+          onSelectStep={handleSelectStep}
           path={activePath}
-          fromRef={fromRef}
-          toRef={toRef}
           floors={floors}
-          buildingSlug={buildingSlug}
-          currentFloorSlug={currentFloorSlug}
+          displayedFloorSlug={displayedFloorSlug}
           profile={profile}
           aiAuthored={Boolean(aiPath)}
           onBack={() => setNavView("settings")}
@@ -255,6 +306,7 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
         map={currentFloor}
         showGraph={showGraph}
         highlightedRoute={currentSegmentNodes}
+        emphasisedNodeId={emphasisedNodeId}
         lang={lang}
       />
     </AppShell>
@@ -327,18 +379,20 @@ function TabButton({
 
 function ExplorePanel({
   lang,
-  buildingSlug,
   floors,
   currentFloor,
-  currentFloorSlug,
+  displayedFloorSlug,
+  onSelectFloor,
+  buildingSlug,
   showGraph,
   onShowGraphChange,
 }: {
   lang: Lang;
-  buildingSlug: string;
   floors: FloorMapData[];
   currentFloor: FloorMapData;
-  currentFloorSlug: string;
+  displayedFloorSlug: string;
+  onSelectFloor: (slug: string) => void;
+  buildingSlug: string;
   showGraph: boolean;
   onShowGraphChange: (v: boolean) => void;
 }) {
@@ -376,13 +430,14 @@ function ExplorePanel({
       <Section label={t.floor}>
         <div className="flex flex-col gap-1.5">
           {floors.map((f) => {
-            const active = f.floorSlug === currentFloorSlug;
+            const active = f.floorSlug === displayedFloorSlug;
             return (
-              <Link
+              <button
                 key={f.floorSlug}
-                href={`/maps/${buildingSlug}/${f.floorSlug}`}
+                type="button"
+                onClick={() => onSelectFloor(f.floorSlug)}
                 className={
-                  "flex items-center gap-3 rounded-md border px-3 py-2 text-body transition-colors " +
+                  "flex items-center gap-3 rounded-md border px-3 py-2 text-left text-body transition-colors " +
                   (active
                     ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[color:var(--foreground)]"
                     : "border-[var(--border)] bg-[var(--background)] hover:bg-[var(--surface-3)]")
@@ -402,7 +457,7 @@ function ExplorePanel({
                 <span className="text-caption">
                   {f.rooms.length} {t.rooms.toLowerCase()}
                 </span>
-              </Link>
+              </button>
             );
           })}
         </div>
@@ -608,23 +663,23 @@ function NavigateSettings({
 
 function DirectionsPanel({
   lang,
+  steps,
+  selectedIdx,
+  onSelectStep,
   path,
-  fromRef,
-  toRef,
   floors,
-  buildingSlug,
-  currentFloorSlug,
+  displayedFloorSlug,
   profile,
   aiAuthored,
   onBack,
 }: {
   lang: Lang;
+  steps: Step[];
+  selectedIdx: number | null;
+  onSelectStep: (idx: number) => void;
   path: MultiFloorPath;
-  fromRef: RoomRef;
-  toRef: RoomRef;
   floors: FloorMapData[];
-  buildingSlug: string;
-  currentFloorSlug: string;
+  displayedFloorSlug: string;
   profile: Profile;
   aiAuthored: boolean;
   onBack: () => void;
@@ -637,7 +692,8 @@ function DirectionsPanel({
         assistant: "Από τον βοηθό",
         cost: "κόστος",
         segments: "τμήματα",
-        notOnFloor: "Αυτό το βήμα είναι σε άλλον όροφο.",
+        otherFloor: "Σε άλλον όροφο",
+        clickHint: "Πατήστε ένα βήμα για να εστιάσετε στον χάρτη.",
       }
     : {
         back: "Back to settings",
@@ -645,13 +701,9 @@ function DirectionsPanel({
         assistant: "From the assistant",
         cost: "cost",
         segments: "segments",
-        notOnFloor: "This step is on another floor.",
+        otherFloor: "On another floor",
+        clickHint: "Tap a step to focus it on the map.",
       };
-
-  const steps = useMemo(
-    () => buildDirections(path, fromRef, toRef, floors, lang),
-    [path, fromRef, toRef, floors, lang],
-  );
 
   const totalSegments = path.segments.reduce(
     (n, s) => n + Math.max(0, s.nodes.length - 1),
@@ -682,9 +734,12 @@ function DirectionsPanel({
           {profileLabel(profile, lang)} · {totalSegments} {t.segments} ·{" "}
           {t.cost} {path.cost.toFixed(1)}
         </p>
+        <p className="text-[0.7rem] text-[color:var(--muted-foreground)]">
+          {t.clickHint}
+        </p>
       </div>
 
-      <ol className="flex flex-col gap-2">
+      <ol className="flex flex-col gap-1">
         {steps.map((step, i) => (
           <StepItem
             key={i}
@@ -692,10 +747,11 @@ function DirectionsPanel({
             step={step}
             floors={floors}
             lang={lang}
-            isOnCurrentFloor={step.floorSlug === currentFloorSlug}
+            isOnDisplayedFloor={step.floorSlug === displayedFloorSlug}
+            isSelected={selectedIdx === i}
             isLast={i === steps.length - 1}
-            buildingSlug={buildingSlug}
-            notOnFloorLabel={t.notOnFloor}
+            otherFloorLabel={t.otherFloor}
+            onClick={() => onSelectStep(i)}
           />
         ))}
       </ol>
@@ -708,55 +764,73 @@ function StepItem({
   step,
   floors,
   lang,
-  isOnCurrentFloor,
+  isOnDisplayedFloor,
+  isSelected,
   isLast,
-  buildingSlug,
-  notOnFloorLabel,
+  otherFloorLabel,
+  onClick,
 }: {
   n: number;
   step: Step;
   floors: FloorMapData[];
   lang: Lang;
-  isOnCurrentFloor: boolean;
+  isOnDisplayedFloor: boolean;
+  isSelected: boolean;
   isLast: boolean;
-  buildingSlug: string;
-  notOnFloorLabel: string;
+  otherFloorLabel: string;
+  onClick: () => void;
 }) {
   const floor = floors.find((f) => f.floorSlug === step.floorSlug);
   const Icon = stepIcon(step);
   const accent = stepAccent(step);
   return (
-    <li className="relative flex items-start gap-3">
-      {/* Vertical connector */}
+    <li className="relative">
+      {/* Vertical connector to the next item */}
       {!isLast && (
         <span
           aria-hidden
-          className="absolute left-[15px] top-8 bottom-[-0.5rem] w-px bg-[var(--border)]"
+          className="absolute left-[27px] top-9 bottom-[-0.25rem] w-px bg-[var(--border)]"
         />
       )}
-      <span
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={isSelected}
         className={
-          "z-[1] grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 " +
-          accent
+          "flex w-full items-start gap-3 rounded-md p-2 text-left transition-colors " +
+          (isSelected
+            ? "bg-[var(--brand-soft)]"
+            : "hover:bg-[var(--surface-3)]")
         }
       >
-        <Icon className="h-3.5 w-3.5" />
-      </span>
-      <div className="flex flex-1 flex-col gap-0.5 pt-1">
-        <p className="text-body text-[color:var(--foreground)]">
-          <span className="text-caption mr-1.5">{n}.</span>
-          {step.text}
-        </p>
-        {!isOnCurrentFloor && floor && (
-          <Link
-            href={`/maps/${buildingSlug}/${floor.floorSlug}`}
-            className="inline-flex items-center gap-1 self-start rounded-md border border-[var(--border)] bg-[var(--background)] px-1.5 py-0.5 text-[0.7rem] text-[color:var(--muted-foreground)] hover:bg-[var(--surface-3)] hover:text-[color:var(--foreground)]"
+        <span
+          className={
+            "z-[1] grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 " +
+            accent
+          }
+        >
+          <Icon className="h-3.5 w-3.5" />
+        </span>
+        <div className="flex flex-1 flex-col gap-0.5 pt-1">
+          <p
+            className={
+              "text-body " +
+              (isSelected
+                ? "font-medium text-[color:var(--foreground)]"
+                : "text-[color:var(--foreground)]")
+            }
           >
-            <CornerRightDown className="h-3 w-3" />
-            {floor.name[lang]} · {notOnFloorLabel}
-          </Link>
-        )}
-      </div>
+            <span className="text-caption mr-1.5">{n}.</span>
+            {step.text}
+          </p>
+          {!isOnDisplayedFloor && floor && (
+            <span className="inline-flex items-center gap-1 self-start rounded-md border border-[var(--border)] bg-[var(--background)] px-1.5 py-0.5 text-[0.7rem] text-[color:var(--muted-foreground)]">
+              <CornerRightDown className="h-3 w-3" />
+              {otherFloorLabel} · {floor.name[lang]}
+            </span>
+          )}
+        </div>
+      </button>
     </li>
   );
 }

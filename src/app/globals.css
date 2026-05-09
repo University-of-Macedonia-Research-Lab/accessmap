@@ -267,3 +267,21 @@
   box-shadow: var(--shadow-card) !important;
   border: none !important;
 }
+
+/*
+ * Pulse animation used for the directions-step emphasis ring on the
+ * map. Suppressed under prefers-reduced-motion so the dot stays still
+ * for users who've asked for less motion.
+ */
+@keyframes accessmap-step-pulse {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 0; }
+}
+.accessmap-step-pulse {
+  animation: accessmap-step-pulse 1.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .accessmap-step-pulse { animation: none; opacity: 0.45; }
+}

@@ -27,6 +27,7 @@ type Props = {
   map: FloorMapData;
   showGraph?: boolean;
   highlightedRoute?: string[];
+  emphasisedNodeId?: string;
   lang?: "en" | "el";
   onRoomClick?: (roomId: string) => void;
 };
