@@ -1,27 +1,98 @@
 "use client";
 
+/**
+ * About page — long-form technical reference.
+ *
+ * Layout: Docusaurus-style two-column on lg+ (article + sticky right TOC).
+ * Single-column on smaller screens. Each numbered section uses the same
+ * design language as the home page: brand-coloured plate numeral,
+ * fading hairline accent, corner ornaments — so the two surfaces feel
+ * like one document.
+ */
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { useLang } from "@/lib/i18n";
+import { useLang, type Lang } from "@/lib/i18n";
+
+type SectionKey =
+  | "schema"
+  | "drawing"
+  | "routing"
+  | "multi-floor"
+  | "profiles"
+  | "assistant"
+  | "stack"
+  | "design";
+
+type SectionEntry = {
+  key: SectionKey;
+  n: string;
+  topicEn: string;
+  topicEl: string;
+};
+
+const SECTIONS: SectionEntry[] = [
+  { key: "schema", n: "01", topicEn: "Schema", topicEl: "Σχήμα" },
+  { key: "drawing", n: "02", topicEn: "Drawing", topicEl: "Σχεδίαση" },
+  { key: "routing", n: "03", topicEn: "Routing", topicEl: "Δρομολόγηση" },
+  { key: "multi-floor", n: "04", topicEn: "Multi-floor", topicEl: "Πολλαπλοί όροφοι" },
+  { key: "profiles", n: "05", topicEn: "Profiles", topicEl: "Προφίλ" },
+  { key: "assistant", n: "06", topicEn: "Assistant", topicEl: "Βοηθός" },
+  { key: "stack", n: "07", topicEn: "Stack", topicEl: "Στοίβα" },
+  { key: "design", n: "08", topicEn: "Design system", topicEl: "Σχεδιαστικό σύστημα" },
+];
 
 export function AboutContent() {
   return (
     <AppShell>
-      <div className="mx-auto flex max-w-3xl flex-col gap-12 px-5 py-10 sm:px-8 sm:py-14">
+      <article className="relative mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+        <Backdrop />
         <Hero />
-        <SchemaSection />
-        <ArchitectureSection />
-        <PathfindingSection />
-        <MultiFloorSection />
-        <ProfilesSection />
-        <AssistantSection />
-        <StackSection />
-        <StyleGuide />
-        <Footer />
-      </div>
+        <div className="mt-16 grid gap-12 lg:mt-20 lg:grid-cols-[minmax(0,1fr)_240px] lg:gap-16">
+          <main className="flex min-w-0 flex-col gap-20">
+            <SchemaSection />
+            <DrawingSection />
+            <RoutingSection />
+            <MultiFloorSection />
+            <ProfilesSection />
+            <AssistantSection />
+            <StackSection />
+            <DesignSection />
+            <Footer />
+          </main>
+          <aside className="hidden lg:block">
+            <Toc />
+          </aside>
+        </div>
+      </article>
     </AppShell>
   );
 }
+
+/* ─── Backdrop ────────────────────────────────────────────────────────────── */
+
+function Backdrop() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 -z-10"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle at 1px 1px, var(--foreground) 1px, transparent 0)",
+        backgroundSize: "26px 26px",
+        opacity: 0.04,
+      }}
+    />
+  );
+}
+
+/* ─── Hero ────────────────────────────────────────────────────────────────── */
 
 function Hero() {
   const { lang } = useLang();
@@ -31,7 +102,7 @@ function Hero() {
         kicker: "Σχετικά με το AccessMap",
         title: "Εσωτερική προσβασιμότητα, σχεδιασμένη από δεδομένα.",
         lead:
-          "Το AccessMap είναι εκπαιδευτικό έργο. Συνδυάζει ένα μικρό σχήμα JSON για κατόψεις ορόφων με κλασική εύρεση διαδρομής και έναν βοηθό που χρησιμοποιεί εργαλεία, ώστε προπτυχιακοί φοιτητές να διαβάσουν ολόκληρη τη στοίβα από άκρο σε άκρο σε ένα απόγευμα.",
+          "Μια ολοκληρωμένη αναφορά για το πώς δουλεύει το AccessMap, από το JSON ενός ορόφου, μέχρι τη δρομολόγηση ανά προφίλ και τον βοηθό που χρησιμοποιεί εργαλεία. Διαβάζεται σε ένα απόγευμα.",
         ctaDemo: "Άνοιγμα demo",
         ctaGitHub: "Πηγή στο GitHub",
       }
@@ -39,39 +110,280 @@ function Hero() {
         kicker: "About AccessMap",
         title: "Indoor accessibility, drawn from data.",
         lead:
-          "AccessMap is a teaching project. It pairs a small JSON schema for floor plans with classic pathfinding and a tool-using assistant, so undergraduates can read the whole stack end to end in an afternoon.",
+          "A complete technical reference for how AccessMap works: the floor JSON, the per-profile routing, and the tool-using assistant. Readable in an afternoon.",
         ctaDemo: "Open the demo",
         ctaGitHub: "Source on GitHub",
       };
   return (
-    <section className="flex flex-col gap-3">
-      <p className="text-overline">{t.kicker}</p>
-      <h1 className="text-display">{t.title}</h1>
-      <p className="text-lead">{t.lead}</p>
-      <div className="flex flex-wrap gap-2">
-        <Link
-          href="/maps/demo-building/ground"
-          className="inline-flex items-center rounded-md bg-[var(--brand)] px-3 py-1.5 text-body font-medium text-white transition-opacity hover:opacity-90"
-        >
-          {t.ctaDemo}
-        </Link>
-        <Link
-          href="https://github.com/University-of-Macedonia-Research-Lab/accessmap"
-          className="inline-flex items-center rounded-md border border-[var(--border)] px-3 py-1.5 text-body font-medium hover:bg-[var(--surface-2)]"
-        >
-          {t.ctaGitHub}
-        </Link>
+    <section
+      className="relative isolate overflow-hidden rounded-3xl border border-[var(--border)] p-7 shadow-[var(--shadow-card)] sm:p-10 md:p-14"
+      style={{
+        background:
+          "linear-gradient(180deg, var(--brand-soft) 0%, var(--background) 100%)",
+      }}
+    >
+      <SectionOrnament position="tr" />
+      <div className="relative flex flex-col items-start gap-5">
+        <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--background)]/80 px-3 py-1 text-overline backdrop-blur-sm">
+          <span
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ background: "var(--brand)" }}
+          />
+          {t.kicker}
+        </span>
+        <h1 className="text-display max-w-[20ch]">{t.title}</h1>
+        <p className="text-lead max-w-[58ch]">{t.lead}</p>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/maps/demo-building/ground"
+            className="group inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-2.5 text-body font-medium text-white shadow-[var(--shadow-card)] transition-[background,transform] hover:bg-[var(--brand-strong)] active:translate-y-px"
+          >
+            {t.ctaDemo}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+          <Link
+            href="https://github.com/University-of-Macedonia-Research-Lab/accessmap"
+            className="group inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background)]/80 px-4 py-2.5 text-body font-medium text-[color:var(--foreground)] hover:bg-[var(--surface-2)]"
+          >
+            {t.ctaGitHub}
+            <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
+        </div>
       </div>
     </section>
   );
 }
+
+/* ─── TOC ─────────────────────────────────────────────────────────────────── */
+
+function Toc() {
+  const { lang } = useLang();
+  const isEl = lang === "el";
+  const [active, setActive] = useState<SectionKey | null>(null);
+
+  useEffect(() => {
+    const els = SECTIONS
+      .map((s) => document.getElementById(s.key))
+      .filter((e): e is HTMLElement => Boolean(e));
+
+    if (els.length === 0) return;
+
+    // Custom scroll-spy: pick the section whose top is closest to (but
+    // above) the 25% viewport line. More predictable than IntersectionObserver
+    // for nested headings of varying height.
+    const compute = () => {
+      const target = window.innerHeight * 0.25;
+      let bestKey: SectionKey | null = null;
+      let bestDist = Infinity;
+      for (const el of els) {
+        const top = el.getBoundingClientRect().top;
+        if (top <= target) {
+          const dist = target - top;
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestKey = el.id as SectionKey;
+          }
+        }
+      }
+      // If we're above the first section, fall back to the first one.
+      if (!bestKey && els[0].getBoundingClientRect().top < window.innerHeight)
+        bestKey = els[0].id as SectionKey;
+      setActive((cur) => (cur === bestKey ? cur : bestKey));
+    };
+
+    compute();
+    const onScroll = () => compute();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  return (
+    <nav
+      aria-label={isEl ? "Πίνακας περιεχομένων" : "On this page"}
+      className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pr-2"
+    >
+      <p className="text-overline">{isEl ? "Σε αυτή τη σελίδα" : "On this page"}</p>
+      <ul className="mt-3 flex flex-col gap-0.5 border-l border-[var(--border)] pl-3">
+        {SECTIONS.map((s) => {
+          const isActive = active === s.key;
+          return (
+            <li key={s.key} className="relative">
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="absolute -left-[13px] top-1.5 bottom-1.5 w-[2px] rounded-r"
+                  style={{ background: "var(--brand)" }}
+                />
+              )}
+              <a
+                href={`#${s.key}`}
+                className={
+                  "flex items-baseline gap-2 rounded-md py-1.5 pr-2 text-caption transition-colors " +
+                  (isActive
+                    ? "text-[color:var(--brand)]"
+                    : "text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]")
+                }
+              >
+                <span className="font-mono text-[0.7rem] tabular-nums opacity-70">
+                  {s.n}
+                </span>
+                <span className={isActive ? "font-medium" : ""}>
+                  {isEl ? s.topicEl : s.topicEn}
+                </span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-6 text-caption text-[color:var(--muted-foreground)]">
+        <a
+          href="#top"
+          onClick={(e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="hover:text-[color:var(--foreground)]"
+        >
+          {isEl ? "Επιστροφή στην αρχή" : "Back to top"} ↑
+        </a>
+      </p>
+    </nav>
+  );
+}
+
+/* ─── Numbered section primitives ─────────────────────────────────────────── */
+
+function NumberedSection({
+  id,
+  n,
+  topic,
+  title,
+  lead,
+  ornament = "tl",
+  children,
+}: {
+  id: SectionKey;
+  n: string;
+  topic: string;
+  title: string;
+  lead?: ReactNode;
+  ornament?: "tl" | "tr" | "bl" | "br";
+  children: ReactNode;
+}) {
+  return (
+    <section
+      id={id}
+      // Offset for the sticky 64px header + breathing room on anchor jumps.
+      className="relative scroll-mt-24 flex flex-col gap-6"
+    >
+      <SectionOrnament position={ornament} />
+      <header className="flex flex-col gap-3">
+        <NumberedKicker n={n} topic={topic} />
+        <h2 className="text-h1 max-w-[26ch]">{title}</h2>
+        {lead && <p className="text-lead max-w-[60ch]">{lead}</p>}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function NumberedKicker({ n, topic }: { n: string; topic: string }) {
+  return (
+    <div className="flex items-end gap-4">
+      <span
+        aria-hidden
+        className="font-bold tabular-nums leading-[0.78] tracking-[-0.05em]"
+        style={{
+          color: "var(--brand)",
+          fontSize: "clamp(3.5rem, 8vw, 5.5rem)",
+        }}
+      >
+        {n}
+      </span>
+      <span className="flex flex-1 flex-col gap-1.5 pb-2">
+        <span className="text-overline text-[color:var(--brand)]">{topic}</span>
+        <span
+          aria-hidden
+          className="h-px w-full"
+          style={{
+            background:
+              "linear-gradient(to right, var(--brand) 0%, var(--brand) 36%, transparent 100%)",
+            opacity: 0.5,
+          }}
+        />
+      </span>
+    </div>
+  );
+}
+
+function SectionOrnament({
+  position,
+}: {
+  position: "tl" | "tr" | "bl" | "br";
+}) {
+  const anchors: Record<typeof position, string> = {
+    tl: "top-0 left-0",
+    tr: "top-0 right-0",
+    bl: "bottom-0 left-0",
+    br: "bottom-0 right-0",
+  };
+  let bracket = "";
+  let dots: Array<[number, number]> = [];
+  switch (position) {
+    case "tl":
+      bracket = "M2,22 L2,2 L22,2";
+      dots = [[34, 6], [42, 6], [50, 6]];
+      break;
+    case "tr":
+      bracket = "M62,22 L62,2 L42,2";
+      dots = [[14, 6], [22, 6], [30, 6]];
+      break;
+    case "bl":
+      bracket = "M2,42 L2,62 L22,62";
+      dots = [[34, 58], [42, 58], [50, 58]];
+      break;
+    case "br":
+      bracket = "M62,42 L62,62 L42,62";
+      dots = [[14, 58], [22, 58], [30, 58]];
+      break;
+  }
+  return (
+    <svg
+      aria-hidden
+      className={
+        "pointer-events-none absolute hidden h-12 w-12 md:block " +
+        anchors[position]
+      }
+      viewBox="0 0 64 64"
+      style={{ color: "var(--brand)", opacity: 0.32 }}
+    >
+      <path
+        d={bracket}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {dots.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="1.6" fill="currentColor" />
+      ))}
+    </svg>
+  );
+}
+
+/* ─── 01 Schema ───────────────────────────────────────────────────────────── */
 
 function SchemaSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
     ? {
-        kicker: "Πρώτα τα δεδομένα",
+        topic: "Σχήμα",
         title: "Οι όροφοι είναι JSON, όχι έργα τέχνης",
         lead:
           "Κάθε όροφος είναι ένα έγγραφο JSON με δωμάτια, πόρτες και γράφημα δρομολόγησης. Ο σχεδιαστής διασχίζει το έγγραφο για να φτιάξει το SVG· ο αλγόριθμος εύρεσης διαδρομής διασχίζει το ίδιο γράφημα για να σχεδιάσει διαδρομές. Η προσθήκη νέου ορόφου σημαίνει ένα νέο αρχείο JSON, όχι επεξεργασία γραφικών.",
@@ -80,7 +392,8 @@ function SchemaSection() {
             Ένας όροφος αναφέρει τα δωμάτια ως 2-D πολύγωνα σε επίπεδο σύστημα
             συντεταγμένων, τις πόρτες ως σημεία σε κοινούς τοίχους, και ένα
             γράφημα κόμβων και ακμών που ζει δίπλα στη γεωμετρία. Οι ακμές
-            φέρουν feature tags όπως <Code>stairs</Code>, <Code>elevator</Code>,{" "}
+            φέρουν feature tags όπως <Code>stairs</Code>, <Code>elevator</Code>,
+            {" "}
             <Code>ramp</Code>, ή <Code>narrow_passage</Code>, ώστε να μπορούμε
             να τα ξανα-σταθμίζουμε ανά προφίλ.
           </>
@@ -93,30 +406,30 @@ function SchemaSection() {
         ),
       }
     : {
-        kicker: "Data first",
+        topic: "Schema",
         title: "Floors are JSON, not artwork",
         lead:
           "Every floor is a JSON document with rooms, doors, and a routing graph. The renderer walks that document to draw SVG; the pathfinder walks the same graph to plan routes. Adding a new floor means writing a new JSON file, not editing artwork.",
         body: (
           <>
-            A floor lists rooms as 2-D polygons in a flat coordinate frame, doors
-            as points on shared walls, and a graph of nodes and edges that lives
-            alongside the geometry. Edges carry feature tags like{" "}
+            A floor lists rooms as 2-D polygons in a flat coordinate frame,
+            doors as points on shared walls, and a graph of nodes and edges
+            that lives alongside the geometry. Edges carry feature tags like{" "}
             <Code>stairs</Code>, <Code>elevator</Code>, <Code>ramp</Code>, or{" "}
             <Code>narrow_passage</Code> so we can reweight them per-profile.
           </>
         ),
         source: (
           <>
-            Schema source: <Code>src/lib/map/schema.ts</Code>, a Zod schema that
-            validates the JSON and exports the matching TypeScript types.
+            Schema source: <Code>src/lib/map/schema.ts</Code>, a Zod schema
+            that validates the JSON and exports the matching TypeScript types.
           </>
         ),
       };
   return (
-    <Section kicker={t.kicker} title={t.title} lead={t.lead}>
+    <NumberedSection id="schema" n="01" topic={t.topic} title={t.title} lead={t.lead} ornament="tr">
       <p className="text-body">{t.body}</p>
-      <pre className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-4 text-caption leading-relaxed">
+      <CodeBlock>
 {`{
   "outline": [{ "x": 0, "y": 0 }, { "x": 100, "y": 0 }, ...],   // exterior boundary
   "walls":   [{ "id": "win-101", "kind": "window",
@@ -127,18 +440,20 @@ function SchemaSection() {
                 "connectsToFloor": { "floorSlug": "first", "nodeId": "n-elev" } }],
   "edges":   [{ "id": "e-c4-stair", "from": "c4", "to": "n-stair", "features": ["stairs"] }]
 }`}
-      </pre>
+      </CodeBlock>
       <p className="text-caption">{t.source}</p>
-    </Section>
+    </NumberedSection>
   );
 }
 
-function ArchitectureSection() {
+/* ─── 02 Drawing ──────────────────────────────────────────────────────────── */
+
+function DrawingSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
     ? {
-        kicker: "Σχεδίαση",
+        topic: "Σχεδίαση",
         title: "Μοιάζει με αληθινή κάτοψη",
         lead:
           "Ο σχεδιαστής συνθέτει το SVG με τη σειρά που θα ζωγράφιζε ένας αρχιτέκτονας: βάση ορόφου, γέμισμα δωματίων, εσωτερικά διαφράγματα, εξωτερικό κέλυφος, παράθυρα, πόρτες, και τέλος ετικέτες και διαδρομή από πάνω.",
@@ -149,7 +464,7 @@ function ArchitectureSection() {
         ],
       }
     : {
-        kicker: "Drawing",
+        topic: "Drawing",
         title: "It looks like a real floor plan",
         lead:
           "The renderer composes the SVG in the same order an architect would draw the plan: floor base, room fills, interior partitions, exterior shell, windows, doors, then labels and route on top.",
@@ -160,25 +475,27 @@ function ArchitectureSection() {
         ],
       };
   return (
-    <Section kicker={t.kicker} title={t.title} lead={t.lead}>
-      <ul className="list-disc space-y-1.5 pl-5 text-body">
+    <NumberedSection id="drawing" n="02" topic={t.topic} title={t.title} lead={t.lead} ornament="tl">
+      <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
-          <li key={i}>
-            <span className="font-medium">{it.strong}</span>
+          <Bullet key={i}>
+            <strong>{it.strong}</strong>
             {it.body}
-          </li>
+          </Bullet>
         ))}
       </ul>
-    </Section>
+    </NumberedSection>
   );
 }
 
-function PathfindingSection() {
+/* ─── 03 Routing ──────────────────────────────────────────────────────────── */
+
+function RoutingSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
     ? {
-        kicker: "Δρομολόγηση",
+        topic: "Δρομολόγηση",
         title: "A* σε γράφημα με βάρη",
         lead:
           "Όταν ο όροφος είναι γράφημα, η εύρεση διαδρομής γίνεται μια κλασική αναζήτηση A*. Η ευρετική είναι απλή ευθεία απόσταση, το κόστος ακμής είναι το βασικό μήκος επί έναν πολλαπλασιαστή προφίλ, και το Infinity μπλοκάρει εντελώς μια ακμή.",
@@ -195,7 +512,7 @@ function PathfindingSection() {
         ),
       }
     : {
-        kicker: "Routing",
+        topic: "Routing",
         title: "A* over a weighted graph",
         lead:
           "Once a floor is a graph, finding a route is a textbook A* search. The heuristic is plain Euclidean distance, the cost of an edge is its base length times a profile multiplier, and Infinity blocks an edge entirely.",
@@ -212,26 +529,28 @@ function PathfindingSection() {
         ),
       };
   return (
-    <Section kicker={t.kicker} title={t.title} lead={t.lead}>
-      <ul className="list-disc space-y-1.5 pl-5 text-body">
+    <NumberedSection id="routing" n="03" topic={t.topic} title={t.title} lead={t.lead} ornament="tr">
+      <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
-          <li key={i}>
-            <span className="font-medium">{it.label}</span>
+          <Bullet key={i}>
+            <strong>{it.label}</strong>
             {it.body}
-          </li>
+          </Bullet>
         ))}
       </ul>
       <p className="text-caption">{t.source}</p>
-    </Section>
+    </NumberedSection>
   );
 }
+
+/* ─── 04 Multi-floor ──────────────────────────────────────────────────────── */
 
 function MultiFloorSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
     ? {
-        kicker: "Δρομολόγηση ανάμεσα σε ορόφους",
+        topic: "Πολλαπλοί όροφοι",
         title: "Ένα γράφημα, πολλοί όροφοι",
         lead:
           "Ένας κόμβος με `connectsToFloor` γίνεται μια ακμή ανάμεσα σε ορόφους. Ο αλγόριθμος εύρεσης διαδρομής φτιάχνει ένα ενοποιημένο γράφημα με κλειδί `floor:node` και τρέχει Dijkstra πάνω του: ίδιος κώδικας για περπάτημα ενός ορόφου και για διέλευση πέντε.",
@@ -249,7 +568,7 @@ function MultiFloorSection() {
         ),
       }
     : {
-        kicker: "Routing across floors",
+        topic: "Multi-floor",
         title: "One graph, many floors",
         lead:
           "A node with `connectsToFloor` becomes a cross-floor edge. The pathfinder builds a single unified graph keyed by `floor:node` and runs Dijkstra over it: same code path for a one-floor walk and a five-floor traversal.",
@@ -266,16 +585,18 @@ function MultiFloorSection() {
         ),
       };
   return (
-    <Section kicker={t.kicker} title={t.title} lead={t.lead}>
-      <ul className="list-disc space-y-1.5 pl-5 text-body">
+    <NumberedSection id="multi-floor" n="04" topic={t.topic} title={t.title} lead={t.lead} ornament="bl">
+      <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
-          <li key={i}>{it}</li>
+          <Bullet key={i}>{it}</Bullet>
         ))}
       </ul>
       <p className="text-caption">{t.source}</p>
-    </Section>
+    </NumberedSection>
   );
 }
+
+/* ─── 05 Profiles ─────────────────────────────────────────────────────────── */
 
 function ProfilesSection() {
   const { lang } = useLang();
@@ -289,7 +610,7 @@ function ProfilesSection() {
   ];
   const t = isEl
     ? {
-        kicker: "Προσβασιμότητα",
+        topic: "Προφίλ",
         title: "Τα προφίλ αλλάζουν το κόστος, όχι το γράφημα",
         lead:
           "Το ίδιο γράφημα δίνει διαφορετικές διαδρομές για διαφορετικούς χρήστες. Κάθε προφίλ είναι μια αντιστοίχιση από feature tag σε πολλαπλασιαστή βάρους. Βάλτε ένα feature στο ∞ και κάθε ακμή με αυτό το tag βγαίνει από την αναζήτηση.",
@@ -299,7 +620,7 @@ function ProfilesSection() {
         h4: "Άτομο με προβλήματα όρασης",
       }
     : {
-        kicker: "Accessibility",
+        topic: "Profiles",
         title: "Profiles change the cost, not the graph",
         lead:
           "The same map graph yields different routes for different users. Each profile is a map from feature tag to weight multiplier. Set a feature to ∞ and any edge with that tag drops out of the search.",
@@ -309,39 +630,43 @@ function ProfilesSection() {
         h4: "Visually impaired",
       };
   return (
-    <Section kicker={t.kicker} title={t.title} lead={t.lead}>
-      <div className="overflow-x-auto rounded-md border border-[var(--border)]">
+    <NumberedSection id="profiles" n="05" topic={t.topic} title={t.title} lead={t.lead} ornament="tl">
+      <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-card)]">
         <table className="w-full text-body">
-          <thead className="bg-[var(--surface-2)] text-caption uppercase tracking-wide">
+          <thead className="bg-[var(--surface-2)] text-overline">
             <tr>
-              <th className="px-3 py-2 text-left font-semibold">{t.h1}</th>
-              <th className="px-3 py-2 text-left font-semibold">{t.h2}</th>
-              <th className="px-3 py-2 text-left font-semibold">{t.h3}</th>
-              <th className="px-3 py-2 text-left font-semibold">{t.h4}</th>
+              <th className="px-4 py-3 text-left">{t.h1}</th>
+              <th className="px-4 py-3 text-left">{t.h2}</th>
+              <th className="px-4 py-3 text-left">{t.h3}</th>
+              <th className="px-4 py-3 text-left">{t.h4}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-[color:var(--muted-foreground)]">
             {rows.map(([feat, ...vals]) => (
               <tr key={feat} className="border-t border-[var(--border)]">
-                <td className="px-3 py-2"><Code>{feat}</Code></td>
+                <td className="px-4 py-3 font-medium text-[color:var(--foreground)]">
+                  <Code>{feat}</Code>
+                </td>
                 {vals.map((v, i) => (
-                  <td key={i} className="px-3 py-2 tabular-nums">{v}</td>
+                  <td key={i} className="px-4 py-3 tabular-nums">{v}</td>
                 ))}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    </Section>
+    </NumberedSection>
   );
 }
+
+/* ─── 06 Assistant ────────────────────────────────────────────────────────── */
 
 function AssistantSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
     ? {
-        kicker: "Βοηθός",
+        topic: "Βοηθός",
         title: "Δύο εργαλεία και ένα cached prompt",
         lead:
           "Ο βοηθός εκθέτει ακριβώς δύο εργαλεία: find_room και find_route. Και τα δύο είναι λεπτά περιτυλίγματα γύρω από τον κώδικα αναζήτησης και δρομολόγησης που ήδη τρέχει στην εφαρμογή. Δεν υπάρχει παράλληλη υλοποίηση.",
@@ -358,7 +683,7 @@ function AssistantSection() {
         ),
       }
     : {
-        kicker: "Assistant",
+        topic: "Assistant",
         title: "Two tools and a cached prompt",
         lead:
           "The assistant exposes exactly two tools: find_room and find_route. Both are thin wrappers around the search and routing code already shipping in the app. There is no parallel implementation.",
@@ -375,19 +700,21 @@ function AssistantSection() {
         ),
       };
   return (
-    <Section kicker={t.kicker} title={t.title} lead={t.lead}>
-      <ul className="list-disc space-y-1.5 pl-5 text-body">
+    <NumberedSection id="assistant" n="06" topic={t.topic} title={t.title} lead={t.lead} ornament="tr">
+      <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
-          <li key={i}>
-            <span className="font-medium">{it.strong}</span>
+          <Bullet key={i}>
+            <strong>{it.strong}</strong>
             {it.body}
-          </li>
+          </Bullet>
         ))}
       </ul>
       <p className="text-caption">{t.source}</p>
-    </Section>
+    </NumberedSection>
   );
 }
+
+/* ─── 07 Stack ────────────────────────────────────────────────────────────── */
 
 function StackSection() {
   const { lang } = useLang();
@@ -415,21 +742,29 @@ function StackSection() {
         ["Anthropic SDK", "Adaptive thinking, betaZodTool tool runner, prompt caching."],
         ["Vitest", "Pathfinder unit tests live next to the implementation."],
       ];
+  const t = isEl
+    ? { topic: "Στοίβα", title: "Τι τρέχει", lead: "Όλα τα κομμάτια του puzzle, και γιατί επιλέχθηκαν." }
+    : { topic: "Stack", title: "What's running", lead: "Every piece of the stack, and why it's there." };
   return (
-    <Section kicker={isEl ? "Στοίβα" : "Stack"} title={isEl ? "Τι τρέχει" : "What's running"}>
+    <NumberedSection id="stack" n="07" topic={t.topic} title={t.title} lead={t.lead} ornament="bl">
       <ul className="grid gap-3 sm:grid-cols-2">
         {items.map(([name, desc]) => (
-          <li key={name} className="rounded-md border border-[var(--border)] bg-[var(--background)] p-3 text-body shadow-[var(--shadow-card)]">
-            <p className="font-medium">{name}</p>
+          <li
+            key={name}
+            className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 text-body shadow-[var(--shadow-card)]"
+          >
+            <p className="font-semibold">{name}</p>
             <p className="text-caption">{desc}</p>
           </li>
         ))}
       </ul>
-    </Section>
+    </NumberedSection>
   );
 }
 
-function StyleGuide() {
+/* ─── 08 Design system ────────────────────────────────────────────────────── */
+
+function DesignSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const swatches: Array<{ name: string; cssVar: string; note: string }> = isEl
@@ -446,10 +781,6 @@ function StyleGuide() {
         { name: "Floor base", cssVar: "--floor-base", note: "Γέμισμα εσωτερικού κτιρίου στον χάρτη." },
         { name: "Wall", cssVar: "--wall-exterior", note: "Μελάνι εξωτερικού τοίχου." },
         { name: "Window", cssVar: "--window-glass", note: "Γυάλινες κοπές σε εξωτερικούς τοίχους." },
-        { name: "Border", cssVar: "--border", note: "Διαχωριστικά, περιγράμματα input." },
-        { name: "Success", cssVar: "--success", note: "Καταστάσεις επιβεβαίωσης." },
-        { name: "Warning", cssVar: "--warning", note: "Ήπιες προειδοποιήσεις, καμία διαδρομή." },
-        { name: "Danger", cssVar: "--danger", note: "Καταστροφικά, μπλοκαρισμένες ακμές." },
       ]
     : [
         { name: "Brand", cssVar: "--brand", note: "Indigo-violet, primary CTAs, brand mark." },
@@ -464,12 +795,7 @@ function StyleGuide() {
         { name: "Floor base", cssVar: "--floor-base", note: "Building interior fill on the map." },
         { name: "Wall", cssVar: "--wall-exterior", note: "Exterior wall ink." },
         { name: "Window", cssVar: "--window-glass", note: "Glass cuts in exterior walls." },
-        { name: "Border", cssVar: "--border", note: "Dividers, input outlines." },
-        { name: "Success", cssVar: "--success", note: "Confirmation states." },
-        { name: "Warning", cssVar: "--warning", note: "Soft alerts, no-route." },
-        { name: "Danger", cssVar: "--danger", note: "Destructive, blocked edges." },
       ];
-
   const typeRows: Array<[string, string, string]> = isEl
     ? [
         [".text-display", "48 / 56 · 700", "Τίτλος hero"],
@@ -491,30 +817,29 @@ function StyleGuide() {
         [".text-caption", "13 / 19 · 400", "Helper / metadata"],
         [".text-overline", "11 / 14 · 600", "Section kicker"],
       ];
-
   const t = isEl
-    ? { kicker: "Σχεδιαστικό σύστημα", title: "Tokens και κλίμακα τυπογραφίας", h1: "Color tokens", h2: "Type scale", h3: "Class", h4: "Μέγεθος / line-height · weight", h5: "Χρήση", h6: "Specimens",
-        specLead: "Lead, χρησιμοποιείται σε εισαγωγικές παραγράφους ενότητας.",
-        specBody: "Body, το βασικό μέγεθος, σχεδόν για όλο το κείμενο.",
-        specCaption: "Caption, metadata, νύξεις, helper text.",
-        specOverline: "Overline label" }
-    : { kicker: "Design system", title: "Tokens and type scale", h1: "Color tokens", h2: "Type scale", h3: "Class", h4: "Size / line-height · weight", h5: "Use", h6: "Specimens",
-        specLead: "Lead, used for intro paragraphs that introduce a section.",
-        specBody: "Body, the workhorse size, used for almost all paragraph copy.",
-        specCaption: "Caption, metadata, hints, helper text.",
-        specOverline: "Overline label" };
-
+    ? { topic: "Σχεδιαστικό σύστημα", title: "Tokens και κλίμακα τυπογραφίας", colors: "Color tokens", typescale: "Type scale" }
+    : { topic: "Design system", title: "Tokens and type scale", colors: "Color tokens", typescale: "Type scale" };
   return (
-    <Section kicker={t.kicker} title={t.title}>
-      <div className="flex flex-col gap-3">
-        <h3 className="text-h3">{t.h1}</h3>
+    <NumberedSection id="design" n="08" topic={t.topic} title={t.title} ornament="tr">
+      <div className="flex flex-col gap-4">
+        <h3 className="text-h3">{t.colors}</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {swatches.map((s) => (
-            <div key={s.cssVar} className="overflow-hidden rounded-md border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-card)]">
-              <div className="h-12 w-full" style={{ background: `var(${s.cssVar})` }} aria-label={s.name} />
+            <div
+              key={s.cssVar}
+              className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-card)]"
+            >
+              <div
+                className="h-12 w-full"
+                style={{ background: `var(${s.cssVar})` }}
+                aria-label={s.name}
+              />
               <div className="flex flex-col gap-0.5 p-2.5">
                 <p className="text-body font-medium">{s.name}</p>
-                <p className="text-caption"><Code>{s.cssVar}</Code></p>
+                <p className="text-caption">
+                  <Code>{s.cssVar}</Code>
+                </p>
                 <p className="text-caption">{s.note}</p>
               </div>
             </div>
@@ -522,15 +847,15 @@ function StyleGuide() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <h3 className="text-h3">{t.h2}</h3>
-        <div className="overflow-x-auto rounded-md border border-[var(--border)]">
+      <div className="flex flex-col gap-4">
+        <h3 className="text-h3">{t.typescale}</h3>
+        <div className="overflow-hidden rounded-2xl border border-[var(--border)]">
           <table className="w-full text-body">
-            <thead className="bg-[var(--surface-2)] text-caption uppercase tracking-wide">
+            <thead className="bg-[var(--surface-2)] text-overline">
               <tr>
-                <th className="px-3 py-2 text-left font-semibold">{t.h3}</th>
-                <th className="px-3 py-2 text-left font-semibold">{t.h4}</th>
-                <th className="px-3 py-2 text-left font-semibold">{t.h5}</th>
+                <th className="px-3 py-2 text-left">Class</th>
+                <th className="px-3 py-2 text-left">{isEl ? "Μέγεθος / line-height · weight" : "Size / line-height · weight"}</th>
+                <th className="px-3 py-2 text-left">{isEl ? "Χρήση" : "Use"}</th>
               </tr>
             </thead>
             <tbody>
@@ -544,28 +869,18 @@ function StyleGuide() {
             </tbody>
           </table>
         </div>
-
-        <div className="flex flex-col gap-2 rounded-md border border-[var(--border)] bg-[var(--background)] p-4">
-          <p className="text-overline">{t.h6}</p>
-          <p className="text-display">Display</p>
-          <p className="text-h1">Heading 1</p>
-          <p className="text-h2">Heading 2</p>
-          <p className="text-h3">Heading 3</p>
-          <p className="text-lead">{t.specLead}</p>
-          <p className="text-body">{t.specBody}</p>
-          <p className="text-caption">{t.specCaption}</p>
-          <p className="text-overline">{t.specOverline}</p>
-        </div>
       </div>
-    </Section>
+    </NumberedSection>
   );
 }
+
+/* ─── Footer ──────────────────────────────────────────────────────────────── */
 
 function Footer() {
   const { lang } = useLang();
   const isEl = lang === "el";
   return (
-    <footer className="border-t border-[var(--border)] pt-6 text-caption">
+    <footer className="mt-8 border-t border-[var(--border)] pt-8 text-caption">
       <p>
         {isEl ? (
           <>
@@ -585,30 +900,32 @@ function Footer() {
   );
 }
 
-function Section({
-  kicker,
-  title,
-  lead,
-  children,
-}: {
-  kicker: string;
-  title: string;
-  lead?: string;
-  children?: React.ReactNode;
-}) {
+/* ─── Shared primitives ───────────────────────────────────────────────────── */
+
+function CodeBlock({ children }: { children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1.5">
-        <p className="text-overline">{kicker}</p>
-        <h2 className="text-h1">{title}</h2>
-        {lead && <p className="text-lead">{lead}</p>}
-      </div>
+    <pre className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4 font-mono text-caption leading-relaxed">
       {children}
-    </section>
+    </pre>
   );
 }
 
-function Code({ children }: { children: React.ReactNode }) {
+function Bullet({ children }: { children: ReactNode }) {
+  return (
+    <li className="flex gap-2.5">
+      <span
+        className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full"
+        style={{ background: "var(--brand)" }}
+        aria-hidden="true"
+      />
+      <span className="text-[color:var(--muted-foreground)] [&_strong]:font-semibold [&_strong]:text-[color:var(--foreground)]">
+        {children}
+      </span>
+    </li>
+  );
+}
+
+function Code({ children }: { children: ReactNode }) {
   return (
     <code className="rounded bg-[var(--surface-2)] px-1.5 py-0.5 font-mono text-[0.85em]">
       {children}
