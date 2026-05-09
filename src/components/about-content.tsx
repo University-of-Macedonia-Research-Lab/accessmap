@@ -55,14 +55,14 @@ export function AboutContent() {
         <Hero />
         <div className="mt-16 grid gap-12 lg:mt-20 lg:grid-cols-[minmax(0,1fr)_240px] lg:gap-16">
           <main className="flex min-w-0 flex-col gap-20">
-            <SchemaSection isActive={active === "schema"} />
-            <DrawingSection isActive={active === "drawing"} />
-            <RoutingSection isActive={active === "routing"} />
-            <MultiFloorSection isActive={active === "multi-floor"} />
-            <ProfilesSection isActive={active === "profiles"} />
-            <AssistantSection isActive={active === "assistant"} />
-            <StackSection isActive={active === "stack"} />
-            <DesignSection isActive={active === "design"} />
+            <SchemaSection />
+            <DrawingSection />
+            <RoutingSection />
+            <MultiFloorSection />
+            <ProfilesSection />
+            <AssistantSection />
+            <StackSection />
+            <DesignSection />
             <Footer />
           </main>
           <aside className="hidden lg:block">
@@ -222,7 +222,6 @@ function NumberedSection({
   title,
   lead,
   ornament = "tl",
-  isActive = false,
   children,
 }: {
   id: SectionKey;
@@ -231,7 +230,6 @@ function NumberedSection({
   title: string;
   lead?: ReactNode;
   ornament?: "tl" | "tr" | "bl" | "br";
-  isActive?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -243,22 +241,9 @@ function NumberedSection({
       // card's border below it.
       className="relative scroll-mt-24 flex flex-col gap-6 pt-6 pb-6"
     >
-      {/* Active-section indicator: a thin brand bar to the left of the
-          section, only visible when this section is the one in the
-          scroll-spy band. Positioned outside the content flow so the
-          layout doesn't shift when active state changes. */}
-      <span
-        aria-hidden
-        className="absolute -left-4 top-1 hidden w-[3px] rounded-full transition-opacity duration-300 md:block"
-        style={{
-          background: "var(--brand)",
-          height: "5.5rem",
-          opacity: isActive ? 1 : 0,
-        }}
-      />
       <SectionOrnament position={ornament} />
       <header className="flex flex-col gap-3">
-        <NumberedKicker n={n} topic={topic} isActive={isActive} />
+        <NumberedKicker n={n} topic={topic} />
         <h2 className="text-h1 max-w-[26ch]">{title}</h2>
         {lead && <p className="text-lead max-w-[60ch]">{lead}</p>}
       </header>
@@ -267,28 +252,15 @@ function NumberedSection({
   );
 }
 
-function NumberedKicker({
-  n,
-  topic,
-  isActive = false,
-}: {
-  n: string;
-  topic: string;
-  isActive?: boolean;
-}) {
+function NumberedKicker({ n, topic }: { n: string; topic: string }) {
   return (
     <div className="flex items-end gap-4">
       <span
         aria-hidden
-        className="font-bold tabular-nums leading-[0.78] tracking-[-0.05em] transition-[filter] duration-300"
+        className="font-bold tabular-nums leading-[0.78] tracking-[-0.05em]"
         style={{
           color: "var(--brand)",
           fontSize: "clamp(3.5rem, 8vw, 5.5rem)",
-          // Subtle glow on the plate numeral when active — works as a
-          // peripheral cue without being loud.
-          filter: isActive
-            ? "drop-shadow(0 0 18px color-mix(in oklab, var(--brand), transparent 70%))"
-            : "none",
         }}
       >
         {n}
@@ -297,12 +269,11 @@ function NumberedKicker({
         <span className="text-overline text-[color:var(--brand)]">{topic}</span>
         <span
           aria-hidden
-          className="h-px w-full transition-[background] duration-500"
+          className="h-px w-full"
           style={{
-            background: isActive
-              ? "linear-gradient(to right, var(--brand) 0%, var(--brand) 100%, transparent 100%)"
-              : "linear-gradient(to right, var(--brand) 0%, var(--brand) 36%, transparent 100%)",
-            opacity: isActive ? 0.85 : 0.5,
+            background:
+              "linear-gradient(to right, var(--brand) 0%, var(--brand) 36%, transparent 100%)",
+            opacity: 0.5,
           }}
         />
       </span>
@@ -417,7 +388,7 @@ function SchemaSection({ isActive }: { isActive: boolean }) {
         ),
       };
   return (
-    <NumberedSection id="schema" n="01" topic={t.topic} title={t.title} lead={t.lead} ornament="tr" isActive={isActive}>
+    <NumberedSection id="schema" n="01" topic={t.topic} title={t.title} lead={t.lead} ornament="tr">
       <p className="text-body">{t.body}</p>
       <CodeBlock>
 {`{
@@ -438,7 +409,7 @@ function SchemaSection({ isActive }: { isActive: boolean }) {
 
 /* ─── 02 Drawing ──────────────────────────────────────────────────────────── */
 
-function DrawingSection({ isActive }: { isActive: boolean }) {
+function DrawingSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
@@ -465,7 +436,7 @@ function DrawingSection({ isActive }: { isActive: boolean }) {
         ],
       };
   return (
-    <NumberedSection id="drawing" n="02" topic={t.topic} title={t.title} lead={t.lead} ornament="tl" isActive={isActive}>
+    <NumberedSection id="drawing" n="02" topic={t.topic} title={t.title} lead={t.lead} ornament="tl">
       <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
           <Bullet key={i}>
@@ -480,7 +451,7 @@ function DrawingSection({ isActive }: { isActive: boolean }) {
 
 /* ─── 03 Routing ──────────────────────────────────────────────────────────── */
 
-function RoutingSection({ isActive }: { isActive: boolean }) {
+function RoutingSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
@@ -519,7 +490,7 @@ function RoutingSection({ isActive }: { isActive: boolean }) {
         ),
       };
   return (
-    <NumberedSection id="routing" n="03" topic={t.topic} title={t.title} lead={t.lead} ornament="tr" isActive={isActive}>
+    <NumberedSection id="routing" n="03" topic={t.topic} title={t.title} lead={t.lead} ornament="tr">
       <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
           <Bullet key={i}>
@@ -535,7 +506,7 @@ function RoutingSection({ isActive }: { isActive: boolean }) {
 
 /* ─── 04 Multi-floor ──────────────────────────────────────────────────────── */
 
-function MultiFloorSection({ isActive }: { isActive: boolean }) {
+function MultiFloorSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
@@ -575,7 +546,7 @@ function MultiFloorSection({ isActive }: { isActive: boolean }) {
         ),
       };
   return (
-    <NumberedSection id="multi-floor" n="04" topic={t.topic} title={t.title} lead={t.lead} ornament="bl" isActive={isActive}>
+    <NumberedSection id="multi-floor" n="04" topic={t.topic} title={t.title} lead={t.lead} ornament="bl">
       <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
           <Bullet key={i}>{it}</Bullet>
@@ -588,7 +559,7 @@ function MultiFloorSection({ isActive }: { isActive: boolean }) {
 
 /* ─── 05 Profiles ─────────────────────────────────────────────────────────── */
 
-function ProfilesSection({ isActive }: { isActive: boolean }) {
+function ProfilesSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const rows: Array<[string, string, string, string]> = [
@@ -620,7 +591,7 @@ function ProfilesSection({ isActive }: { isActive: boolean }) {
         h4: "Visually impaired",
       };
   return (
-    <NumberedSection id="profiles" n="05" topic={t.topic} title={t.title} lead={t.lead} ornament="tl" isActive={isActive}>
+    <NumberedSection id="profiles" n="05" topic={t.topic} title={t.title} lead={t.lead} ornament="tl">
       <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-card)]">
         <table className="w-full text-body">
           <thead className="bg-[var(--surface-2)] text-overline">
@@ -651,7 +622,7 @@ function ProfilesSection({ isActive }: { isActive: boolean }) {
 
 /* ─── 06 Assistant ────────────────────────────────────────────────────────── */
 
-function AssistantSection({ isActive }: { isActive: boolean }) {
+function AssistantSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
@@ -690,7 +661,7 @@ function AssistantSection({ isActive }: { isActive: boolean }) {
         ),
       };
   return (
-    <NumberedSection id="assistant" n="06" topic={t.topic} title={t.title} lead={t.lead} ornament="tr" isActive={isActive}>
+    <NumberedSection id="assistant" n="06" topic={t.topic} title={t.title} lead={t.lead} ornament="tr">
       <ul className="flex flex-col gap-2 text-body">
         {t.items.map((it, i) => (
           <Bullet key={i}>
@@ -706,7 +677,7 @@ function AssistantSection({ isActive }: { isActive: boolean }) {
 
 /* ─── 07 Stack ────────────────────────────────────────────────────────────── */
 
-function StackSection({ isActive }: { isActive: boolean }) {
+function StackSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const items: Array<[string, string]> = isEl
@@ -736,7 +707,7 @@ function StackSection({ isActive }: { isActive: boolean }) {
     ? { topic: "Στοίβα", title: "Τι τρέχει", lead: "Όλα τα κομμάτια του puzzle, και γιατί επιλέχθηκαν." }
     : { topic: "Stack", title: "What's running", lead: "Every piece of the stack, and why it's there." };
   return (
-    <NumberedSection id="stack" n="07" topic={t.topic} title={t.title} lead={t.lead} ornament="bl" isActive={isActive}>
+    <NumberedSection id="stack" n="07" topic={t.topic} title={t.title} lead={t.lead} ornament="bl">
       <ul className="grid gap-3 sm:grid-cols-2">
         {items.map(([name, desc]) => (
           <li
@@ -754,7 +725,7 @@ function StackSection({ isActive }: { isActive: boolean }) {
 
 /* ─── 08 Design system ────────────────────────────────────────────────────── */
 
-function DesignSection({ isActive }: { isActive: boolean }) {
+function DesignSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const swatches: Array<{ name: string; cssVar: string; note: string }> = isEl
@@ -811,7 +782,7 @@ function DesignSection({ isActive }: { isActive: boolean }) {
     ? { topic: "Σχεδιαστικό σύστημα", title: "Tokens και κλίμακα τυπογραφίας", colors: "Color tokens", typescale: "Type scale" }
     : { topic: "Design system", title: "Tokens and type scale", colors: "Color tokens", typescale: "Type scale" };
   return (
-    <NumberedSection id="design" n="08" topic={t.topic} title={t.title} ornament="tr" isActive={isActive}>
+    <NumberedSection id="design" n="08" topic={t.topic} title={t.title} ornament="tr">
       <div className="flex flex-col gap-4">
         <h3 className="text-h3">{t.colors}</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
