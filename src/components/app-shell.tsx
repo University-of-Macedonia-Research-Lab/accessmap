@@ -151,7 +151,9 @@ function Header({
       <div className="ml-2 hidden text-caption sm:block">{slot}</div>
 
       <nav className="ml-auto flex items-center gap-1 text-body sm:gap-2">
-        <NavLink href="/">{t.home}</NavLink>
+        {/* The wordmark already links home, so the explicit Home item is
+            redundant on phones where every pixel counts. Hide it below sm. */}
+        <NavLink href="/" className="hidden sm:inline-flex">{t.home}</NavLink>
         <NavLink href="/about">{t.about}</NavLink>
         <LanguageToggle />
         <ThemeToggle />
@@ -160,11 +162,22 @@ function Header({
   );
 }
 
-function NavLink({ href, children }: { href: string; children: ReactNode }) {
+function NavLink({
+  href,
+  children,
+  className,
+}: {
+  href: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <Link
       href={href}
-      className="rounded-md px-2.5 py-1.5 text-[color:var(--muted-foreground)] transition-colors hover:bg-[var(--surface-2)] hover:text-[color:var(--foreground)]"
+      className={
+        "rounded-md px-2.5 py-1.5 text-[color:var(--muted-foreground)] transition-colors hover:bg-[var(--surface-2)] hover:text-[color:var(--foreground)] " +
+        (className ?? "")
+      }
     >
       {children}
     </Link>

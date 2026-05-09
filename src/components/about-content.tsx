@@ -202,7 +202,12 @@ function Toc({ active }: { active: SectionKey | null }) {
           href="#top"
           onClick={(e) => {
             e.preventDefault();
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            // The page scrolls inside the AppShell's <main>, not the
+            // window — call scrollTo on whichever scroll container the
+            // browser is actually moving.
+            const main = document.querySelector("main");
+            if (main) main.scrollTo({ top: 0, behavior: "smooth" });
+            else window.scrollTo({ top: 0, behavior: "smooth" });
           }}
           className="hover:text-[color:var(--foreground)]"
         >
