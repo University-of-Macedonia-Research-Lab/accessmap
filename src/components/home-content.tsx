@@ -1245,9 +1245,11 @@ function Section({
     <section
       id={id}
       // pt-6 lifts the big plate numeral off the corner ornament so the
-      // dots and L-bracket aren't hidden behind the numeral. scroll-mt-24
-      // keeps anchor jumps clear of the sticky 64px header.
-      className="relative scroll-mt-24 flex flex-col gap-6 pt-6"
+      // dots and L-bracket aren't hidden behind the numeral; pb-6 mirrors
+      // it for bottom-anchored ornaments so they don't crash into the
+      // last card's border. scroll-mt-24 keeps anchor jumps clear of the
+      // sticky 64px header.
+      className="relative scroll-mt-24 flex flex-col gap-6 pt-6 pb-6"
     >
       <SectionOrnament position={ornament} />
       <header className="flex flex-col gap-3">

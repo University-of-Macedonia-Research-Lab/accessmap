@@ -238,10 +238,10 @@ function NumberedSection({
     <section
       id={id}
       // Offset for the sticky 64px header + breathing room on anchor jumps.
-      // `pt-6` keeps the big plate numeral from sitting on top of a top-
-      // anchored corner ornament; bottom-anchored ornaments don't conflict
-      // but the extra padding stays harmless.
-      className="relative scroll-mt-24 flex flex-col gap-6 pt-6"
+      // `pt-6` keeps the big plate numeral off a top-anchored corner
+      // ornament; `pb-6` keeps a bottom-anchored ornament off the last
+      // card's border below it.
+      className="relative scroll-mt-24 flex flex-col gap-6 pt-6 pb-6"
     >
       {/* Active-section indicator: a thin brand bar to the left of the
           section, only visible when this section is the one in the
