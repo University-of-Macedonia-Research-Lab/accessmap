@@ -18,6 +18,12 @@ import {
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageToggle } from "@/components/language-toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useLang } from "@/lib/i18n";
 
 type Props = {
@@ -151,10 +157,14 @@ function Header({
       <div className="ml-2 hidden text-caption sm:block">{slot}</div>
 
       <nav className="ml-auto flex items-center gap-1 text-body sm:gap-2">
-        {/* The wordmark already links home, so the explicit Home item is
-            redundant on phones where every pixel counts. Hide it below sm. */}
+        {/* Inline nav links on sm+; on mobile they fold into the burger
+            dropdown so the row doesn't overflow alongside the language
+            and theme toggles. */}
         <NavLink href="/" className="hidden sm:inline-flex">{t.home}</NavLink>
-        <NavLink href="/about">{t.about}</NavLink>
+        <NavLink href="/about" className="hidden sm:inline-flex">
+          {t.about}
+        </NavLink>
+        <MobileNavMenu />
         <LanguageToggle />
         <ThemeToggle />
       </nav>
@@ -181,6 +191,43 @@ function NavLink({
     >
       {children}
     </Link>
+  );
+}
+
+/** Burger dropdown that holds the nav links on phones. Hidden on sm+
+ *  because the inline NavLinks take over there. */
+function MobileNavMenu() {
+  const { lang } = useLang();
+  const t = lang === "el"
+    ? { menu: "Μενού", home: "Αρχική", about: "Σχετικά" }
+    : { menu: "Menu", home: "Home", about: "About" };
+  return (
+    <div className="sm:hidden">
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label={t.menu}
+          className="grid h-9 w-9 place-items-center rounded-md border border-transparent text-[color:var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[color:var(--foreground)] focus-visible:outline-none"
+        >
+          <Menu className="h-5 w-5" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" sideOffset={8} className="min-w-36">
+          <DropdownMenuItem
+            render={(props) => (
+              <Link href="/" {...props}>
+                {t.home}
+              </Link>
+            )}
+          />
+          <DropdownMenuItem
+            render={(props) => (
+              <Link href="/about" {...props}>
+                {t.about}
+              </Link>
+            )}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 
