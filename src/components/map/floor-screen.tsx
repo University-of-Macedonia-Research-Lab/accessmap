@@ -28,6 +28,7 @@ import {
   CornerRightDown,
   CornerUpLeft,
   CornerUpRight,
+  Eraser,
   Eye,
   Flag,
   Info,
@@ -281,6 +282,13 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
             setFromRefState(toRef);
             setToRefState(fromRef);
             setAiPath(null);
+            setSelectedStepIdx(null);
+          }}
+          onClear={() => {
+            setFromRefState(defaultFrom);
+            setToRefState(defaultTo);
+            setAiPath(null);
+            setSelectedStepIdx(null);
           }}
           onShowDirections={() => setNavView("directions")}
           activePath={activePath}
@@ -528,6 +536,7 @@ function NavigateSettings({
   onToChange,
   onProfileChange,
   onSwap,
+  onClear,
   onShowDirections,
   activePath,
   buildingSlug,
@@ -543,6 +552,7 @@ function NavigateSettings({
   onToChange: (v: RoomRef) => void;
   onProfileChange: (v: string) => void;
   onSwap: () => void;
+  onClear: () => void;
   onShowDirections: () => void;
   activePath: MultiFloorPath | null;
   buildingSlug: string;
@@ -556,6 +566,7 @@ function NavigateSettings({
         from: "Από",
         to: "Προς",
         swap: "Αντιστροφή",
+        clear: "Καθαρισμός",
         getDirections: "Οδηγίες",
         noRoute: "Επιλέξτε δύο διαφορετικά δωμάτια.",
         noRouteForProfile: (p: string) => `Καμία διαδρομή για το προφίλ «${p.toLowerCase()}».`,
@@ -566,6 +577,7 @@ function NavigateSettings({
         from: "From",
         to: "To",
         swap: "Swap",
+        clear: "Clear",
         getDirections: "Get directions",
         noRoute: "Pick two different rooms.",
         noRouteForProfile: (p: string) => `No route for the ${p.toLowerCase()} profile.`,
@@ -614,13 +626,22 @@ function NavigateSettings({
         <Field label={t.to}>
           <RoomSelect value={toRef} options={options} onChange={onToChange} />
         </Field>
-        <button
-          type="button"
-          onClick={onSwap}
-          className="self-start rounded-md border border-[var(--border)] bg-[var(--background)] px-2.5 py-1 text-xs font-medium text-[color:var(--foreground)] hover:bg-[var(--surface-3)]"
-        >
-          ↑↓ {t.swap}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onSwap}
+            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--background)] px-2.5 py-1 text-xs font-medium text-[color:var(--foreground)] hover:bg-[var(--surface-3)]"
+          >
+            <span aria-hidden>↑↓</span> {t.swap}
+          </button>
+          <button
+            type="button"
+            onClick={onClear}
+            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--background)] px-2.5 py-1 text-xs font-medium text-[color:var(--muted-foreground)] hover:bg-[var(--surface-3)] hover:text-[color:var(--foreground)]"
+          >
+            <Eraser className="h-3 w-3" /> {t.clear}
+          </button>
+        </div>
 
         {sameRoom ? (
           <p className="text-caption">{t.noRoute}</p>
