@@ -26,11 +26,15 @@ import {
   ArrowRight,
   ArrowUp,
   CornerRightDown,
+  CornerUpLeft,
+  CornerUpRight,
   Eye,
+  Flag,
   Info,
   MapPin,
+  MoveRight,
   Navigation,
-  Compass as CompassIcon,
+  RefreshCw,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { FloorMap } from "./floor-map";
@@ -40,11 +44,8 @@ import {
   findMultiFloorRouteBetweenRooms,
   type MultiFloorPath,
 } from "@/lib/map/multi-pathfind";
-import type {
-  AccessibilityFeature,
-  FloorMap as FloorMapData,
-  GraphNode,
-} from "@/lib/map/schema";
+import type { FloorMap as FloorMapData } from "@/lib/map/schema";
+import { buildDirections, type Step } from "@/lib/map/directions";
 import { useLang, type Lang } from "@/lib/i18n";
 
 const PROFILE_LIST = Object.values(PROFILES);
@@ -600,136 +601,10 @@ function NavigateSettings({
 }
 
 /* ─── Navigate · Directions view ──────────────────────────────────────────── */
-
-type Step = {
-  kind: "start" | "go" | "elevator" | "stairs" | "switch-floor" | "arrive";
-  text: string;
-  floorSlug: string;
-  nodeId?: string;
-};
-
-function buildSteps(
-  path: MultiFloorPath,
-  fromRef: RoomRef,
-  toRef: RoomRef,
-  floors: FloorMapData[],
-  lang: Lang,
-): Step[] {
-  const isEl = lang === "el";
-  const word = isEl
-    ? {
-        startAt: "Ξεκινάτε από",
-        passingThrough: "Περάστε από",
-        takeElevator: "Πάρτε το ασανσέρ",
-        takeStairs: "Πάρτε τις σκάλες",
-        switchTo: "Φτάνετε στον όροφο",
-        arriveAt: "Φτάνετε στο",
-      }
-    : {
-        startAt: "Start at",
-        passingThrough: "Pass by",
-        takeElevator: "Take the elevator",
-        takeStairs: "Take the stairs",
-        switchTo: "Arrive on",
-        arriveAt: "Arrive at",
-      };
-
-  const floorBySlug = new Map(floors.map((f) => [f.floorSlug, f]));
-  const lookupRoom = (floorSlug: string, roomId: string | undefined) => {
-    if (!roomId) return null;
-    const f = floorBySlug.get(floorSlug);
-    if (!f) return null;
-    return f.rooms.find((r) => r.id === roomId) ?? null;
-  };
-  const lookupNode = (floorSlug: string, nodeId: string): GraphNode | null => {
-    const f = floorBySlug.get(floorSlug);
-    if (!f) return null;
-    return f.nodes.find((n) => n.id === nodeId) ?? null;
-  };
-  const featureFor = (n: GraphNode): AccessibilityFeature | null => {
-    return n.features[0] ?? null;
-  };
-
-  const steps: Step[] = [];
-
-  // Start
-  const fromRoom = lookupRoom(fromRef.floor, fromRef.room);
-  steps.push({
-    kind: "start",
-    floorSlug: fromRef.floor,
-    text: `${word.startAt} ${fromRoom ? fromRoom.name[lang] : fromRef.room}`,
-  });
-
-  // Walk segments
-  for (let segIdx = 0; segIdx < path.segments.length; segIdx++) {
-    const seg = path.segments[segIdx];
-    const f = floorBySlug.get(seg.floorSlug);
-    if (!f) continue;
-
-    // Notable waypoints inside this segment: nodes with a roomId or a
-    // feature, *excluding* the endpoints which we name as start/arrive.
-    const isFirst = segIdx === 0;
-    const isLast = segIdx === path.segments.length - 1;
-    for (let i = 0; i < seg.nodes.length; i++) {
-      const nodeId = seg.nodes[i];
-      // Skip the very start of the very first segment (already covered)
-      // and the very end of the very last segment (handled below).
-      if (isFirst && i === 0) continue;
-      if (isLast && i === seg.nodes.length - 1) continue;
-
-      const node = lookupNode(seg.floorSlug, nodeId);
-      if (!node) continue;
-      const feat = featureFor(node);
-      const room = lookupRoom(seg.floorSlug, node.roomId);
-
-      if (feat === "elevator") {
-        steps.push({
-          kind: "elevator",
-          floorSlug: seg.floorSlug,
-          nodeId,
-          text: word.takeElevator,
-        });
-      } else if (feat === "stairs") {
-        steps.push({
-          kind: "stairs",
-          floorSlug: seg.floorSlug,
-          nodeId,
-          text: word.takeStairs,
-        });
-      } else if (room && room.kind !== "corridor") {
-        steps.push({
-          kind: "go",
-          floorSlug: seg.floorSlug,
-          nodeId,
-          text: `${word.passingThrough} ${room.name[lang]}`,
-        });
-      }
-    }
-
-    // Floor change between this segment and the next
-    if (segIdx < path.segments.length - 1) {
-      const next = path.segments[segIdx + 1];
-      const nextFloor = floorBySlug.get(next.floorSlug);
-      if (nextFloor) {
-        steps.push({
-          kind: "switch-floor",
-          floorSlug: next.floorSlug,
-          text: `${word.switchTo} ${nextFloor.name[lang]}`,
-        });
-      }
-    }
-  }
-
-  // Arrive
-  const toRoom = lookupRoom(toRef.floor, toRef.room);
-  steps.push({
-    kind: "arrive",
-    floorSlug: toRef.floor,
-    text: `${word.arriveAt} ${toRoom ? toRoom.name[lang] : toRef.room}`,
-  });
-
-  return steps;
-}
+//
+// The buildDirections() walker lives in src/lib/map/directions.ts; it
+// emits Step objects with metres, turn classification, and floor-change
+// direction. The view below just renders them.
 
 function DirectionsPanel({
   lang,
@@ -774,7 +649,7 @@ function DirectionsPanel({
       };
 
   const steps = useMemo(
-    () => buildSteps(path, fromRef, toRef, floors, lang),
+    () => buildDirections(path, fromRef, toRef, floors, lang),
     [path, fromRef, toRef, floors, lang],
   );
 
@@ -848,7 +723,8 @@ function StepItem({
   notOnFloorLabel: string;
 }) {
   const floor = floors.find((f) => f.floorSlug === step.floorSlug);
-  const Icon = stepIcon(step.kind);
+  const Icon = stepIcon(step);
+  const accent = stepAccent(step);
   return (
     <li className="relative flex items-start gap-3">
       {/* Vertical connector */}
@@ -861,11 +737,7 @@ function StepItem({
       <span
         className={
           "z-[1] grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 " +
-          (step.kind === "arrive"
-            ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-            : step.kind === "start"
-              ? "border-[var(--brand)] bg-[var(--background)] text-[color:var(--brand)]"
-              : "border-[var(--border)] bg-[var(--background)] text-[color:var(--muted-foreground)]")
+          accent
         }
       >
         <Icon className="h-3.5 w-3.5" />
@@ -889,21 +761,42 @@ function StepItem({
   );
 }
 
-function stepIcon(kind: Step["kind"]) {
-  switch (kind) {
+function stepIcon(step: Step) {
+  switch (step.kind) {
     case "start":
       return MapPin;
+    case "continue":
+      switch (step.turn) {
+        case "left":
+          return CornerUpLeft;
+        case "right":
+          return CornerUpRight;
+        case "u-turn":
+          return RefreshCw;
+        case "straight":
+        default:
+          return MoveRight;
+      }
     case "elevator":
-      return ArrowUp;
     case "stairs":
-      return ArrowDown;
-    case "switch-floor":
-      return CompassIcon;
+      return step.direction === "up" ? ArrowUp : ArrowDown;
     case "arrive":
-      return Info;
-    case "go":
+      return Flag;
+  }
+}
+
+function stepAccent(step: Step): string {
+  switch (step.kind) {
+    case "start":
+      return "border-[var(--brand)] bg-[var(--background)] text-[color:var(--brand)]";
+    case "arrive":
+      return "border-[var(--brand)] bg-[var(--brand)] text-white";
+    case "elevator":
+    case "stairs":
+      return "border-[var(--feature)] bg-[var(--background)] text-[color:var(--feature)]";
+    case "continue":
     default:
-      return ArrowRight;
+      return "border-[var(--border)] bg-[var(--background)] text-[color:var(--muted-foreground)]";
   }
 }
 
