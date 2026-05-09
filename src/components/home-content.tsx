@@ -140,7 +140,7 @@ function Hero() {
             </Link>
           </div>
 
-          <ul className="mt-1 grid w-full grid-cols-2 gap-x-6 gap-y-3 sm:max-w-2xl sm:grid-cols-2 sm:gap-x-5 lg:grid-cols-4 lg:gap-x-4">
+          <ul className="mt-1 grid w-full max-w-md grid-cols-2 gap-x-6 gap-y-3 sm:gap-x-8">
             <LearnItem {...t.itemA} />
             <LearnItem {...t.itemB} />
             <LearnItem {...t.itemC} />
@@ -156,17 +156,14 @@ function Hero() {
 
 function LearnItem({ label, body }: { label: string; body: string }) {
   return (
-    // `min-w-0` lets the grid track shrink below the intrinsic content
-    // width so longer (Greek) labels wrap inside their cell instead of
-    // overflowing into the next column.
-    <li className="flex min-w-0 flex-col gap-0.5">
+    <li className="flex min-w-0 flex-col gap-0.5 whitespace-nowrap">
       <span
-        className="font-mono text-[0.7rem] font-semibold tracking-[0.06em] [text-wrap:balance]"
+        className="font-mono text-[0.7rem] font-semibold tracking-[0.06em]"
         style={{ color: "var(--brand)" }}
       >
         {label}
       </span>
-      <span className="text-caption text-[color:var(--foreground)] [text-wrap:balance]">
+      <span className="text-caption text-[color:var(--foreground)]">
         {body}
       </span>
     </li>
