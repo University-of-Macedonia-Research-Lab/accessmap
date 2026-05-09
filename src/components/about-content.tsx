@@ -339,7 +339,7 @@ function SectionOrnament({
 
 /* ─── 01 Schema ───────────────────────────────────────────────────────────── */
 
-function SchemaSection({ isActive }: { isActive: boolean }) {
+function SchemaSection() {
   const { lang } = useLang();
   const isEl = lang === "el";
   const t = isEl
