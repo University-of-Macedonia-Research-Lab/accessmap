@@ -44,9 +44,9 @@ export function HomeContent() {
   return (
     <AppShell>
       <Hero />
-      <article className="relative mx-auto w-full max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
+      <article className="relative mx-auto w-full max-w-7xl px-5 py-20 sm:px-8 sm:py-28">
         <Backdrop />
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_220px] lg:gap-16">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_220px] lg:gap-12 xl:gap-16">
           <main className="relative flex min-w-0 flex-col gap-24 md:gap-32">
             <Pillars />
             <WebAccessibility n="01" />
@@ -704,9 +704,9 @@ function Architecture({ n }: { n: string }) {
       };
   return (
     <Section id="architecture" n={n} ornament="tr" kicker={head.kicker} title={head.title} lead={head.lead}>
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+      <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
         <ArchitectureDiagram />
-        <div className="flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 shadow-[var(--shadow-card)]">
+        <div className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 shadow-[var(--shadow-card)]">
           <h3 className="text-h3">{head.primitivesTitle}</h3>
           <DefList items={head.items} />
           <pre className="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4 font-mono text-caption leading-relaxed">
@@ -758,7 +758,7 @@ function ArchitectureDiagram() {
         },
       };
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 shadow-[var(--shadow-card)]">
+    <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 shadow-[var(--shadow-card)]">
       <h3 className="text-h3">{t.title}</h3>
       <p className="text-caption">{t.caption}</p>
       <div className="overflow-hidden rounded-xl bg-[var(--surface-2)]">
@@ -921,7 +921,7 @@ function Algorithms({ n }: { n: string }) {
       };
   return (
     <Section id="algorithms" n={n} ornament="bl" kicker={head.kicker} title={head.title} lead={head.lead}>
-      <div className="grid gap-4 lg:grid-cols-[1.05fr_1fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.05fr_1fr]">
         <Card>
           <h3 className="text-h3">{head.astarTitle}</h3>
           <ul className="flex flex-col gap-2 text-body">
@@ -1357,8 +1357,12 @@ function FeatureCard({
 }
 
 function Card({ children }: { children: React.ReactNode }) {
+  // `min-w-0` lets a Card sitting inside a grid track shrink below the
+  // intrinsic width of its content (e.g. a wide <pre>). Without it, a
+  // long code block here pushes the whole grid column wider, which on
+  // home spills into the right TOC.
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 shadow-[var(--shadow-card)]">
+    <div className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 shadow-[var(--shadow-card)]">
       {children}
     </div>
   );
