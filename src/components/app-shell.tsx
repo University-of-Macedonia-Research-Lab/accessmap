@@ -159,14 +159,15 @@ function Header({
       <nav className="ml-auto flex items-center gap-1 text-body sm:gap-2">
         {/* Inline nav links on sm+; on mobile they fold into the burger
             dropdown so the row doesn't overflow alongside the language
-            and theme toggles. */}
+            and theme toggles. Order on mobile reads (left→right):
+            theme · language · burger. */}
         <NavLink href="/" className="hidden sm:inline-flex">{t.home}</NavLink>
         <NavLink href="/about" className="hidden sm:inline-flex">
           {t.about}
         </NavLink>
-        <MobileNavMenu />
-        <LanguageToggle />
         <ThemeToggle />
+        <LanguageToggle />
+        <MobileNavMenu />
       </nav>
     </header>
   );
