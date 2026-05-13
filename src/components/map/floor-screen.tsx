@@ -103,32 +103,12 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
     [floors, lang],
   );
 
-  const defaultFrom: RoomRef = useMemo(() => {
-    const entrance = floors.flatMap((f) =>
-      f.rooms.filter((r) => r.kind === "entrance").map((r) => ({ floor: f.floorSlug, room: r.id })),
-    )[0];
-    if (entrance) return entrance;
-    const first = allRoomOptions[0];
-    return first
-      ? { floor: first.floor, room: first.room }
-      : { floor: currentFloorSlug, room: "" };
-  }, [floors, allRoomOptions, currentFloorSlug]);
-
-  const defaultTo: RoomRef = useMemo(() => {
-    const onCurrent = allRoomOptions.find(
-      (o) =>
-        o.floor === currentFloorSlug &&
-        !(o.floor === defaultFrom.floor && o.room === defaultFrom.room),
-    );
-    if (onCurrent) return { floor: onCurrent.floor, room: onCurrent.room };
-    const any = allRoomOptions.find(
-      (o) => !(o.floor === defaultFrom.floor && o.room === defaultFrom.room),
-    );
-    return any ? { floor: any.floor, room: any.room } : defaultFrom;
-  }, [allRoomOptions, currentFloorSlug, defaultFrom]);
-
-  const [fromRef, setFromRefState] = useState<RoomRef>(defaultFrom);
-  const [toRef, setToRefState] = useState<RoomRef>(defaultTo);
+  // Page boots with no route — the form is empty and the map shows just
+  // the floor plan. The user picks From/To (or asks the assistant) to
+  // generate a route.
+  const EMPTY_REF: RoomRef = { floor: "", room: "" };
+  const [fromRef, setFromRefState] = useState<RoomRef>(EMPTY_REF);
+  const [toRef, setToRefState] = useState<RoomRef>(EMPTY_REF);
   const [profileId, setProfileIdState] = useState<string>("default");
   const [showGraph, setShowGraph] = useState(false);
   const [aiPath, setAiPath] = useState<MultiFloorPath | null>(null);
@@ -288,8 +268,8 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
             // Empty `room` makes RoomSelect render its placeholder; the
             // existing manualPath check (`!fromRef.room || !toRef.room`)
             // already short-circuits routing on empty refs.
-            setFromRefState({ floor: "", room: "" });
-            setToRefState({ floor: "", room: "" });
+            setFromRefState(EMPTY_REF);
+            setToRefState(EMPTY_REF);
             setAiPath(null);
             setSelectedStepIdx(null);
           }}
