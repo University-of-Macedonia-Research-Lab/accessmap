@@ -18,13 +18,15 @@
  * (start, room arrivals, elevator/stairs, floor changes, end). Phase 2
  * will replace it with a real turn-by-turn synthesiser.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowDown,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  ChevronLeft,
+  ChevronRight,
   CornerRightDown,
   CornerUpLeft,
   CornerUpRight,
@@ -38,6 +40,12 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { FloorMap } from "./floor-map";
 import { AssistantPanel } from "./assistant-panel";
 import { PROFILES, type Profile } from "@/lib/map/pathfind";
@@ -159,13 +167,29 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
 
   // When the assistant returns a route, jump straight into the directions
   // view so the user sees the answer instead of having to click through
-  // the form again.
+  // the form again. Also mirror the assistant's chosen endpoints into the
+  // manual From/To selects so flipping back to Settings reflects what was
+  // asked (and the user can tweak it from there).
   useEffect(() => {
-    if (aiPath) {
-      setTab("navigate");
-      setNavView("directions");
-    }
-  }, [aiPath]);
+    if (!aiPath) return;
+    setTab("navigate");
+    setNavView("directions");
+
+    const segs = aiPath.segments;
+    if (segs.length === 0) return;
+    const firstSeg = segs[0];
+    const lastSeg = segs[segs.length - 1];
+    const firstNodeId = firstSeg.nodes[0];
+    const lastNodeId = lastSeg.nodes[lastSeg.nodes.length - 1];
+    const firstFloor = floors.find((f) => f.floorSlug === firstSeg.floorSlug);
+    const lastFloor = floors.find((f) => f.floorSlug === lastSeg.floorSlug);
+    const fromRoomId = firstFloor?.nodes.find((n) => n.id === firstNodeId)?.roomId;
+    const toRoomId = lastFloor?.nodes.find((n) => n.id === lastNodeId)?.roomId;
+    // Bypass the setFromRef/setToRef wrappers — those clear aiPath, which
+    // would defeat the whole point here.
+    if (fromRoomId) setFromRefState({ floor: firstSeg.floorSlug, room: fromRoomId });
+    if (toRoomId) setToRefState({ floor: lastSeg.floorSlug, room: toRoomId });
+  }, [aiPath, floors]);
 
   const currentSegmentNodes = useMemo(() => {
     if (!activePath) return undefined;
@@ -208,78 +232,100 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
     }
   };
 
+  // Below lg, the sidebar collapses into a bottom-sheet pattern: a fixed
+  // bottom nav with Explore / Navigate is always visible, and tapping a tab
+  // slides up a sheet with the matching panel. Feels native on phones and
+  // keeps the map fully visible at idle.
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const onMobileTabClick = (next: Tab) => {
+    if (mobileSheetOpen && tab === next) {
+      setMobileSheetOpen(false);
+    } else {
+      setTab(next);
+      setMobileSheetOpen(true);
+    }
+  };
+
+  // The active panel — extracted so we can render it both in the desktop
+  // sidebar (with the Tabs control on top) and in the mobile bottom sheet
+  // (where the bottom nav already plays the tab-switcher role).
+  const panel =
+    tab === "explore" ? (
+      <ExplorePanel
+        lang={lang}
+        floors={floors}
+        currentFloor={currentFloor}
+        displayedFloorSlug={displayedFloorSlug}
+        onSelectFloor={(slug) => {
+          setDisplayedFloorSlug(slug);
+          setSelectedStepIdx(null);
+        }}
+        buildingSlug={buildingSlug}
+        showGraph={showGraph}
+        onShowGraphChange={setShowGraph}
+      />
+    ) : navView === "directions" && activePath ? (
+      <DirectionsPanel
+        lang={lang}
+        steps={directionsSteps}
+        selectedIdx={selectedStepIdx}
+        onSelectStep={handleSelectStep}
+        path={activePath}
+        floors={floors}
+        displayedFloorSlug={displayedFloorSlug}
+        profile={profile}
+        aiAuthored={Boolean(aiPath)}
+        onBack={() => setNavView("settings")}
+      />
+    ) : (
+      <NavigateSettings
+        lang={lang}
+        fromRef={fromRef}
+        toRef={toRef}
+        options={allRoomOptions}
+        profileId={profileId}
+        onFromChange={setFromRef}
+        onToChange={setToRef}
+        onProfileChange={setProfileId}
+        onSwap={() => {
+          setFromRefState(toRef);
+          setToRefState(fromRef);
+          setAiPath(null);
+          setSelectedStepIdx(null);
+        }}
+        onClear={() => {
+          // Empty `room` makes RoomSelect render its placeholder; the
+          // existing manualPath check (`!fromRef.room || !toRef.room`)
+          // already short-circuits routing on empty refs.
+          setFromRefState(EMPTY_REF);
+          setToRefState(EMPTY_REF);
+          setAiPath(null);
+          setSelectedStepIdx(null);
+        }}
+        onShowDirections={() => setNavView("directions")}
+        activePath={activePath}
+        buildingSlug={buildingSlug}
+        currentFloorSlug={currentFloorSlug}
+        onAssistantRoute={(p, profileId) => {
+          setAiPath(p);
+          // Mirror the assistant's profile choice into the manual
+          // selector so "I use a wheelchair" flips the profile too.
+          // Bypass setProfileId — that wrapper clears aiPath.
+          if (profileId && PROFILES[profileId]) {
+            setProfileIdState(profileId);
+          }
+        }}
+      />
+    );
+
   const sidebar = (
     <div className="flex flex-col gap-4">
       <Tabs
         value={tab}
-        onChange={(v) => {
-          setTab(v);
-          // Switching to navigate after a route already exists feels
-          // most natural landing on the directions view.
-          if (v === "navigate" && activePath) setNavView("directions");
-        }}
+        onChange={setTab}
         labels={{ explore: t.explore, navigate: t.navigate }}
       />
-
-      {tab === "explore" ? (
-        <ExplorePanel
-          lang={lang}
-          floors={floors}
-          currentFloor={currentFloor}
-          displayedFloorSlug={displayedFloorSlug}
-          onSelectFloor={(slug) => {
-            setDisplayedFloorSlug(slug);
-            setSelectedStepIdx(null);
-          }}
-          buildingSlug={buildingSlug}
-          showGraph={showGraph}
-          onShowGraphChange={setShowGraph}
-        />
-      ) : navView === "directions" && activePath ? (
-        <DirectionsPanel
-          lang={lang}
-          steps={directionsSteps}
-          selectedIdx={selectedStepIdx}
-          onSelectStep={handleSelectStep}
-          path={activePath}
-          floors={floors}
-          displayedFloorSlug={displayedFloorSlug}
-          profile={profile}
-          aiAuthored={Boolean(aiPath)}
-          onBack={() => setNavView("settings")}
-        />
-      ) : (
-        <NavigateSettings
-          lang={lang}
-          fromRef={fromRef}
-          toRef={toRef}
-          options={allRoomOptions}
-          profileId={profileId}
-          onFromChange={setFromRef}
-          onToChange={setToRef}
-          onProfileChange={setProfileId}
-          onSwap={() => {
-            setFromRefState(toRef);
-            setToRefState(fromRef);
-            setAiPath(null);
-            setSelectedStepIdx(null);
-          }}
-          onClear={() => {
-            // Empty `room` makes RoomSelect render its placeholder; the
-            // existing manualPath check (`!fromRef.room || !toRef.room`)
-            // already short-circuits routing on empty refs.
-            setFromRefState(EMPTY_REF);
-            setToRefState(EMPTY_REF);
-            setAiPath(null);
-            setSelectedStepIdx(null);
-          }}
-          onShowDirections={() => setNavView("directions")}
-          activePath={activePath}
-          buildingSlug={buildingSlug}
-          currentFloorSlug={currentFloorSlug}
-          onAssistantRoute={(p) => setAiPath(p)}
-        />
-      )}
+      {panel}
     </div>
   );
 
@@ -292,14 +338,47 @@ export function FloorScreen({ buildingSlug, floors, currentFloorSlug }: Props) {
       }
       sidebar={sidebar}
       sidebarTitle={t.controls}
+      mobileSidebar="none"
     >
-      <FloorMap
-        map={currentFloor}
-        showGraph={showGraph}
-        highlightedRoute={currentSegmentNodes}
-        emphasisedNodeId={emphasisedNodeId}
-        lang={lang}
+      {/* Leave room at the bottom on phones so the fixed nav doesn't
+          cover the corner of the map. Match the nav's actual height,
+          including the iOS home-indicator safe area. */}
+      <div className="relative h-full pb-[calc(env(safe-area-inset-bottom)+3.5rem)] lg:pb-0">
+        <FloorMap
+          map={currentFloor}
+          showGraph={showGraph}
+          highlightedRoute={currentSegmentNodes}
+          emphasisedNodeId={emphasisedNodeId}
+          lang={lang}
+        />
+      </div>
+
+      <MobileBottomNav
+        tab={tab}
+        sheetOpen={mobileSheetOpen}
+        onTabClick={onMobileTabClick}
+        labels={{ explore: t.explore, navigate: t.navigate }}
       />
+
+      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+        <SheetContent
+          side="bottom"
+          showCloseButton={false}
+          className="max-h-[80vh] rounded-t-2xl border-t border-[var(--border)] bg-[var(--surface-1)] p-0 lg:hidden"
+        >
+          <SheetTitle className="sr-only">{t.controls}</SheetTitle>
+          <SheetDescription className="sr-only">
+            {lang === "el"
+              ? "Έλεγχοι χάρτη και βοηθός"
+              : "Map controls and assistant"}
+          </SheetDescription>
+          {/* Drag handle (decorative — drag-to-dismiss isn't wired) */}
+          <div className="mx-auto mt-2 mb-1 h-1.5 w-10 rounded-full bg-[var(--border)]" />
+          <div className="flex flex-col gap-4 overflow-y-auto px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
+            {panel}
+          </div>
+        </SheetContent>
+      </Sheet>
     </AppShell>
   );
 }
@@ -362,6 +441,78 @@ function TabButton({
     >
       {icon}
       {label}
+    </button>
+  );
+}
+
+/* ─── Mobile bottom nav ───────────────────────────────────────────────────── */
+
+/**
+ * Bottom-of-screen tab bar shown below `lg`. Always visible so the user
+ * can swap panels (or dismiss the sheet) without hunting for a burger.
+ * Tapping the active tab while its sheet is open closes the sheet.
+ */
+function MobileBottomNav({
+  tab,
+  sheetOpen,
+  onTabClick,
+  labels,
+}: {
+  tab: Tab;
+  sheetOpen: boolean;
+  onTabClick: (next: Tab) => void;
+  labels: { explore: string; navigate: string };
+}) {
+  return (
+    <nav
+      role="tablist"
+      aria-label={labels.explore + " / " + labels.navigate}
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--background)]/95 supports-backdrop-filter:bg-[var(--background)]/80 supports-backdrop-filter:backdrop-blur-md pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 lg:hidden"
+    >
+      <div className="mx-auto flex max-w-md gap-1 px-3">
+        <BottomNavButton
+          active={sheetOpen && tab === "explore"}
+          onClick={() => onTabClick("explore")}
+          icon={<Eye className="h-4 w-4" />}
+          label={labels.explore}
+        />
+        <BottomNavButton
+          active={sheetOpen && tab === "navigate"}
+          onClick={() => onTabClick("navigate")}
+          icon={<Navigation className="h-4 w-4" />}
+          label={labels.navigate}
+        />
+      </div>
+    </nav>
+  );
+}
+
+function BottomNavButton({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={
+        "flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[0.7rem] font-semibold transition-colors " +
+        (active
+          ? "bg-[var(--brand-soft)] text-[color:var(--brand)]"
+          : "text-[color:var(--muted-foreground)] hover:bg-[var(--surface-2)] hover:text-[color:var(--foreground)]")
+      }
+    >
+      {icon}
+      <span>{label}</span>
     </button>
   );
 }
@@ -540,7 +691,7 @@ function NavigateSettings({
   activePath: MultiFloorPath | null;
   buildingSlug: string;
   currentFloorSlug: string;
-  onAssistantRoute: (p: MultiFloorPath) => void;
+  onAssistantRoute: (p: MultiFloorPath, profileId: string | null) => void;
 }) {
   const isEl = lang === "el";
   const t = isEl
@@ -718,6 +869,10 @@ function DirectionsPanel({
         segments: "τμήματα",
         otherFloor: "Σε άλλον όροφο",
         clickHint: "Πατήστε ένα βήμα για να εστιάσετε στον χάρτη.",
+        prev: "Προηγ.",
+        next: "Επόμ.",
+        stepOf: (i: number, n: number) => `Βήμα ${i} από ${n}`,
+        stepsCount: (n: number) => `${n} βήματα`,
       }
     : {
         back: "Back to settings",
@@ -727,12 +882,41 @@ function DirectionsPanel({
         segments: "segments",
         otherFloor: "On another floor",
         clickHint: "Tap a step to focus it on the map.",
+        prev: "Prev",
+        next: "Next",
+        stepOf: (i: number, n: number) => `Step ${i} of ${n}`,
+        stepsCount: (n: number) => `${n} steps`,
       };
 
   const totalSegments = path.segments.reduce(
     (n, s) => n + Math.max(0, s.nodes.length - 1),
     0,
   );
+
+  // Keep refs to each step's <li> so Prev/Next can scroll the focused step
+  // into view inside the sidebar's scroll container.
+  const stepRefs = useRef<Array<HTMLLIElement | null>>([]);
+  useEffect(() => {
+    if (selectedIdx === null) return;
+    stepRefs.current[selectedIdx]?.scrollIntoView({
+      block: "nearest",
+      behavior: "smooth",
+    });
+  }, [selectedIdx]);
+
+  const hasSelection = selectedIdx !== null;
+  const canPrev = hasSelection && selectedIdx > 0;
+  const canNext = hasSelection
+    ? selectedIdx < steps.length - 1
+    : steps.length > 0;
+  const goPrev = () => {
+    if (!canPrev) return;
+    onSelectStep((selectedIdx as number) - 1);
+  };
+  const goNext = () => {
+    if (!canNext) return;
+    onSelectStep(hasSelection ? (selectedIdx as number) + 1 : 0);
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -763,6 +947,34 @@ function DirectionsPanel({
         </p>
       </div>
 
+      <div className="flex items-center justify-between gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-2)] p-1.5">
+        <button
+          type="button"
+          onClick={goPrev}
+          disabled={!canPrev}
+          aria-label={t.prev}
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-caption font-medium text-[color:var(--foreground)] hover:bg-[var(--surface-3)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          {t.prev}
+        </button>
+        <span className="text-caption tabular-nums">
+          {hasSelection
+            ? t.stepOf((selectedIdx as number) + 1, steps.length)
+            : t.stepsCount(steps.length)}
+        </span>
+        <button
+          type="button"
+          onClick={goNext}
+          disabled={!canNext}
+          aria-label={t.next}
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-caption font-medium text-[color:var(--foreground)] hover:bg-[var(--surface-3)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+        >
+          {t.next}
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+
       <ol className="flex flex-col gap-1">
         {steps.map((step, i) => (
           <StepItem
@@ -776,6 +988,9 @@ function DirectionsPanel({
             isLast={i === steps.length - 1}
             otherFloorLabel={t.otherFloor}
             onClick={() => onSelectStep(i)}
+            liRef={(el) => {
+              stepRefs.current[i] = el;
+            }}
           />
         ))}
       </ol>
@@ -793,6 +1008,7 @@ function StepItem({
   isLast,
   otherFloorLabel,
   onClick,
+  liRef,
 }: {
   n: number;
   step: Step;
@@ -803,12 +1019,13 @@ function StepItem({
   isLast: boolean;
   otherFloorLabel: string;
   onClick: () => void;
+  liRef?: (el: HTMLLIElement | null) => void;
 }) {
   const floor = floors.find((f) => f.floorSlug === step.floorSlug);
   const Icon = stepIcon(step);
   const accent = stepAccent(step);
   return (
-    <li className="relative">
+    <li ref={liRef} className="relative">
       {/* Vertical connector to the next item */}
       {!isLast && (
         <span

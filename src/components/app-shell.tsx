@@ -33,6 +33,11 @@ type Props = {
   sidebar?: ReactNode;
   /** Title shown at the top of the mobile drawer when open. */
   sidebarTitle?: string;
+  /** How the sidebar manifests below `lg`. "drawer" (default) shows a burger
+   *  in the header that opens a left slide-in. "none" suppresses both — used
+   *  by pages that build their own mobile pattern (e.g. the map demo's
+   *  bottom-nav + bottom-sheet). */
+  mobileSidebar?: "drawer" | "none";
   children: ReactNode;
 };
 
@@ -40,6 +45,7 @@ export function AppShell({
   headerSlot,
   sidebar,
   sidebarTitle,
+  mobileSidebar = "drawer",
   children,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -53,7 +59,7 @@ export function AppShell({
     <div className="flex h-dvh flex-col bg-[var(--surface-1)]">
       <Header
         onMenuClick={() => setOpen(true)}
-        showMenu={Boolean(sidebar)}
+        showMenu={Boolean(sidebar) && mobileSidebar === "drawer"}
         slot={headerSlot}
       />
 
@@ -75,7 +81,7 @@ export function AppShell({
         </main>
       </div>
 
-      {sidebar && (
+      {sidebar && mobileSidebar === "drawer" && (
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetContent side="left" className="w-[88vw] max-w-sm p-0">
             <div className="flex flex-col gap-1 px-4 pt-4">

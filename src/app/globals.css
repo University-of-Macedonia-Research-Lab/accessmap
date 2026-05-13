@@ -253,6 +253,12 @@
 .leaflet-container {
   font-family: var(--font-sans);
   background: var(--surface-2);
+  /* Leaflet sets z-index up to 1000 on its internal controls/panes, but
+   * .leaflet-container itself doesn't create a stacking context — so
+   * those values leak out and end up above app chrome (drawers, nav).
+   * `isolation: isolate` contains them so the map participates in page
+   * stacking as a single z-auto block. */
+  isolation: isolate;
 }
 .leaflet-control-zoom a {
   background: var(--card) !important;

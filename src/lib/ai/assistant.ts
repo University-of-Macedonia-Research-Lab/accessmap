@@ -28,6 +28,8 @@ export type AssistantResponse = {
   text: string;
   /** Multi-floor route the assistant chose, if any. */
   path: MultiFloorPath | null;
+  /** Profile id used for the last successful `find_route` call, if any. */
+  profileId: string | null;
   usage: {
     input_tokens: number;
     output_tokens: number;
@@ -48,7 +50,7 @@ const SYSTEM_INTRO =
 
 function makeTools(
   floors: FloorMap[],
-  captured: { path: MultiFloorPath | null },
+  captured: { path: MultiFloorPath | null; profileId: string | null },
 ) {
   const findRoom = betaZodTool({
     name: "find_room",
@@ -135,6 +137,7 @@ function makeTools(
         });
       }
       captured.path = result;
+      captured.profileId = p.id;
       return JSON.stringify({
         ok: true,
         profile: p.id,
@@ -195,7 +198,10 @@ export async function askAssistant(
   }
 
   const client = new Anthropic();
-  const captured: { path: MultiFloorPath | null } = { path: null };
+  const captured: { path: MultiFloorPath | null; profileId: string | null } = {
+    path: null,
+    profileId: null,
+  };
   const tools = makeTools(floors, captured);
 
   const messages: Anthropic.Beta.BetaMessageParam[] = [
@@ -222,6 +228,7 @@ export async function askAssistant(
   return {
     text,
     path: captured.path,
+    profileId: captured.profileId,
     usage: {
       input_tokens: finalMessage.usage.input_tokens,
       output_tokens: finalMessage.usage.output_tokens,

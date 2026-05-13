@@ -10,8 +10,11 @@ type ChatMessage = { role: "user" | "assistant"; content: string };
 type Props = {
   building: string;
   floor: string;
-  /** Called whenever the assistant returns a non-null multi-floor path. */
-  onRoute: (path: MultiFloorPath) => void;
+  /** Called whenever the assistant returns a non-null multi-floor path.
+   *  `profileId` carries the accessibility profile the assistant chose
+   *  (e.g. "wheelchair" when the user mentioned mobility constraints) so
+   *  the parent can mirror it into the manual settings. */
+  onRoute: (path: MultiFloorPath, profileId: string | null) => void;
 };
 
 export function AssistantPanel({ building, floor, onRoute }: Props) {
@@ -88,7 +91,7 @@ export function AssistantPanel({ building, floor, onRoute }: Props) {
         ...next,
         { role: "assistant", content: data.text || t.emptyResponse },
       ]);
-      if (data.path) onRoute(data.path);
+      if (data.path) onRoute(data.path, data.profileId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "unknown_error");
     } finally {
