@@ -177,6 +177,11 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "cv11", "ss01", "ss03";
+    /* Let long, unbreakable words (URLs, compound Greek terms, code
+     * identifiers) break onto the next line instead of pushing past the
+     * viewport edge on narrow screens. Only kicks in when a word would
+     * otherwise overflow, so normal wrapping is untouched. */
+    overflow-wrap: break-word;
   }
   html {
     font-family: var(--font-sans);

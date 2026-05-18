@@ -131,7 +131,9 @@ function Hero() {
           />
           {t.kicker}
         </span>
-        <h1 className="text-display max-w-[20ch]">{t.title}</h1>
+        <h1 className="max-w-[20ch] font-bold leading-[1.08] tracking-[-0.025em] text-[clamp(2rem,6vw,3rem)]">
+          {t.title}
+        </h1>
         <p className="text-lead max-w-[58ch]">{t.lead}</p>
         <div className="flex flex-wrap gap-3">
           <Link
@@ -597,8 +599,8 @@ function ProfilesSection() {
       };
   return (
     <NumberedSection id="profiles" n="05" topic={t.topic} title={t.title} lead={t.lead} ornament="tl">
-      <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-card)]">
-        <table className="w-full text-body">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-card)]">
+        <table className="w-full min-w-[34rem] text-body">
           <thead className="bg-[var(--surface-2)] text-overline">
             <tr>
               <th className="px-4 py-3 text-left">{t.h1}</th>
@@ -815,8 +817,8 @@ function DesignSection() {
 
       <div className="flex flex-col gap-4">
         <h3 className="text-h3">{t.typescale}</h3>
-        <div className="overflow-hidden rounded-2xl border border-[var(--border)]">
-          <table className="w-full text-body">
+        <div className="overflow-x-auto rounded-2xl border border-[var(--border)]">
+          <table className="w-full min-w-[26rem] text-body">
             <thead className="bg-[var(--surface-2)] text-overline">
               <tr>
                 <th className="px-3 py-2 text-left">Class</th>

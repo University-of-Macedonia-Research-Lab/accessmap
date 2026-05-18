@@ -208,7 +208,10 @@ function Hero() {
           <BrandBadge label={t.badge} />
           <h1
             id="hero-title"
-            className="text-display max-w-[20ch] sm:text-[3.5rem] sm:leading-[1.05]"
+            // Fluid size: shrinks on phones so long Greek words don't break
+            // mid-word or run off-screen, grows to the display size on wide
+            // viewports. clamp avoids a hard jump at the `sm` breakpoint.
+            className="max-w-[20ch] font-bold leading-[1.08] tracking-[-0.025em] text-[clamp(2rem,7vw,3.5rem)]"
           >
             {t.title}
           </h1>
@@ -246,7 +249,7 @@ function Hero() {
 
 function LearnItem({ label, body }: { label: string; body: string }) {
   return (
-    <li className="flex min-w-0 flex-col gap-0.5 whitespace-nowrap">
+    <li className="flex min-w-0 flex-col gap-0.5">
       <span
         className="font-mono text-[0.7rem] font-semibold tracking-[0.06em]"
         style={{ color: "var(--brand)" }}
@@ -643,8 +646,8 @@ function MapAccessibility({ n }: { n: string }) {
       };
   return (
     <Section id="map-accessibility" n={n} ornament="tl" kicker={head.kicker} title={head.title} lead={head.lead}>
-      <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-card)]">
-        <table className="w-full text-body">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-card)]">
+        <table className="w-full min-w-[34rem] text-body">
           <thead className="bg-[var(--surface-2)] text-overline">
             <tr>
               <th className="px-4 py-3 text-left">{head.head1}</th>
